@@ -320,7 +320,7 @@ class _SimpleFullScreenWebViewState extends State<SimpleFullScreenWebView> {
             });
             
             // 页面加载完成后初始化桥接
-            if (widget.enableBridge) {
+            if (widget.enableBridge&& _bridgeManager == null) {
               _bridgeManager = WebViewBridgeManager(_controller);
               await _bridgeManager!.initializeBridge();
               
