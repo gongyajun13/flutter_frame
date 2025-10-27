@@ -16,6 +16,9 @@ abstract class Routes {
   static const CUSTOM_DIALOG_DEMO = _Paths.CUSTOM_DIALOG_DEMO;
   static const WEBVIEW_MVVM_DEMO = _Paths.WEBVIEW_MVVM_DEMO;
   static const WEBVIEW_MVVM = _Paths.WEBVIEW_MVVM;
+  static const IMAGE_UTIL_DEMO = _Paths.IMAGE_UTIL_DEMO;
+  static const VIDEO_PLAYER_DEMO = _Paths.VIDEO_PLAYER_DEMO;
+  static const DEEPSEEK_DEMO = _Paths.DEEPSEEK_DEMO;
 }
 
 /// 路由路径
@@ -34,5 +37,8 @@ abstract class _Paths {
   static const CUSTOM_DIALOG_DEMO = '/custom-dialog-demo';
   static const WEBVIEW_MVVM_DEMO = '/webview-mvvm-demo';
   static const WEBVIEW_MVVM = '/webview-mvvm';
+  static const IMAGE_UTIL_DEMO = '/image-util-demo';
+  static const VIDEO_PLAYER_DEMO = '/video-player-demo';
+  static const DEEPSEEK_DEMO = '/deepseek-demo';
 }
 

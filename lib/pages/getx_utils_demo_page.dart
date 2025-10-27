@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../app/routes/app_pages.dart';
 import '../utils/getx_utils.dart';
 
 /// GetX工具类演示页面
@@ -158,7 +159,7 @@ class _GetXUtilsDemoPageState extends State<GetXUtilsDemoPage> {
                 _buildButton(
                   '自定义对话框',
                   Colors.pink,
-                  () => _showCustomDialog(),
+                  () =>  Get.toNamed(Routes.CUSTOM_DIALOG_DEMO),
                 ),
               ],
             ),

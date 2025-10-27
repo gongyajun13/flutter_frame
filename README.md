@@ -8,6 +8,7 @@
 - 🎨 **GetX 工具类**：Dialog、SnackBar 等全局工具
 - 📱 **屏幕适配**：flutter_screenutil 完整集成
 - 🖼️ **图片组件**：多种缓存图片 Widget
+- 📸 **图片处理**：选择、裁剪、压缩、上传一体化
 - 💾 **本地缓存**：SharedPreferences 封装
 - 🔗 **URL 跳转**：各种跳转场景支持
 - 🌍 **WebView**：H5 ↔ Flutter 桥接通信
@@ -28,7 +29,7 @@ flutter run -d <device_id>
 ```
 
 ### 查看演示
-应用包含 **9 个功能演示页面**：
+应用包含 **12 个功能演示页面**：
 
 1. 简化网络请求演示
 2. 屏幕适配演示
@@ -39,12 +40,15 @@ flutter run -d <device_id>
 7. 全屏 WebView 演示
 8. WebView 桥接演示
 9. 自定义对话框演示
+10. WebView MVVM 演示
+11. 图片处理工具演示 ⭐️
+12. 高级图片选择与裁剪演示 🎨
 
 ## 📚 文档
 
 ### 📖 [完整文档索引](./DOCS_INDEX.md)
 
-#### 功能指南（10 个）
+#### 功能指南（12 个）
 - [网络请求使用指南](./SIMPLE_NETWORK_USAGE.md)
 - [GetX 工具指南](./GETX_UTILS_GUIDE.md)
 - [自定义对话框指南](./CUSTOM_DIALOG_GUIDE.md)
@@ -55,6 +59,9 @@ flutter run -d <device_id>
 - [WebView 桥接指南](./WEBVIEW_BRIDGE_GUIDE.md)
 - [WebView 缓存指南](./WEBVIEW_CACHE_GUIDE.md)
 - [MVVM 架构指南](./MVVM_ARCHITECTURE_GUIDE.md)
+- [图片处理工具指南](./IMAGE_UTIL_GUIDE.md) ⭐️
+  - [配置指南](./IMAGE_UTIL_CONFIG.md)
+- [高级图片选择与裁剪指南](./ADVANCED_IMAGE_PICKER_GUIDE.md) 🎨
 
 #### 重要总结（4 个）
 - [项目最终总结](./FINAL_SUMMARY.md)
@@ -79,6 +86,10 @@ dependencies:
   shared_preferences: ^2.2.2         # 本地缓存
   url_launcher: ^6.2.2               # URL 跳转
   webview_flutter: ^4.13.0           # WebView
+  image_picker: ^1.0.7               # 图片选择
+  image_cropper: ^5.0.1              # 图片裁剪
+  flutter_image_compress: ^2.1.0     # 图片压缩
+  permission_handler: ^11.2.0        # 权限处理
 ```
 
 ## 🌟 核心亮点
@@ -104,6 +115,20 @@ dependencies:
 - 方法注册和调用
 - 完整的缓存管理
 
+### 5. 图片处理工具 ⭐️
+- 图片选择（相机/相册/多选）
+- 图片裁剪（多种比例）
+- 图片压缩（质量/大小）
+- 图片上传（单张/批量）
+- 完整流程一键处理
+
+### 6. 高级图片选择与裁剪 🎨
+- 相册目录浏览
+- 多选图片（带序号标识）
+- 实时预览
+- 高级裁剪（多比例/圆形）
+- 批量处理
+
 ## 📁 项目结构
 
 ```
@@ -128,9 +153,11 @@ flutter_frame/
 │       ├── getx_dialog_util.dart
 │       ├── getx_snackbar_util.dart
 │       ├── local_cache_util.dart
+│       ├── image_util.dart     # 图片处理工具 ⭐️
 │       └── ...
 └── 文档/
-    ├── 功能指南（10 个）
+    ├── 功能指南（12 个）
+    ├── 配置指南（1 个）
     └── 重要总结（4 个）
 ```
 
@@ -164,6 +191,12 @@ GetXSnackBarUtil.error(message: '操作失败');
 // 本地缓存
 await LocalCacheUtil.setString('key', 'value');
 String? value = await LocalCacheUtil.getString('key');
+
+// 图片处理 ⭐️
+final file = await ImageUtil.pickFromGallery();
+final cropped = await ImageUtil.cropImage(file);
+final compressed = await ImageUtil.compressToSize(cropped, maxSizeKB: 500);
+await ImageUtil.uploadImage(compressed, url);
 ```
 
 ## 📊 项目状态
@@ -178,10 +211,10 @@ String? value = await LocalCacheUtil.getString('key');
 
 ## 🎉 项目成就
 
-- ✅ **9 个演示页面**
-- ✅ **7 个工具类**
+- ✅ **12 个演示页面**
+- ✅ **8 个工具类**
 - ✅ **8 个自定义 Widget**
-- ✅ **14 个文档**
+- ✅ **17 个文档**
 - ✅ **0 个已知问题**
 
 ## 📄 许可证
@@ -194,8 +227,8 @@ MIT License
 
 ---
 
-**项目版本**: 2.0.0  
-**更新日期**: 2025-10-21  
+**项目版本**: 2.2.0  
+**更新日期**: 2025-10-22  
 **状态**: ✅ 稳定运行
 
 查看 **[完整文档索引](./DOCS_INDEX.md)** 了解更多详情。

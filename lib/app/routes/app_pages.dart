@@ -23,6 +23,11 @@ import '../../pages/webview_mvvm_demo/webview_mvvm_demo_page.dart';
 import '../../pages/webview_mvvm_demo/webview_mvvm_demo_binding.dart';
 import '../../pages/webview_mvvm_demo/webview_mvvm_page.dart';
 import '../../pages/webview_mvvm_demo/webview_mvvm_binding.dart';
+import '../../pages/image_util_demo/image_util_demo_view.dart';
+import '../../pages/image_util_demo/image_util_demo_binding.dart';
+import '../../pages/video_player_demo/video_player_demo_page.dart';
+import '../../pages/deepseek_demo/deepseek_demo_view.dart';
+import '../../pages/deepseek_demo/deepseek_demo_binding.dart';
 
 part 'app_routes.dart';
 
@@ -116,6 +121,27 @@ class AppPages {
       page: () => const WebViewMvvmPage(),
       binding: WebViewMvvmBinding(),
     ),
+    
+    // 图片处理工具演示
+    GetPage(
+      name: _Paths.IMAGE_UTIL_DEMO,
+      page: () => const ImageUtilDemoView(),
+      binding: ImageUtilDemoBinding(),
+    ),
+
+    // 视频播放器演示
+    GetPage(
+      name: _Paths.VIDEO_PLAYER_DEMO,
+      page: () => const VideoPlayerDemoPage(),
+    ),
+
+    // DeepSeek API 演示
+    GetPage(
+      name: _Paths.DEEPSEEK_DEMO,
+      page: () => const DeepSeekDemoView(),
+      binding: DeepSeekDemoBinding(),
+    ),
+
   ];
 }
 

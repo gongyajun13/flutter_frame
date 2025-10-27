@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   # 适配
   flutter_screenutil: ^5.9.3
+  flutter_markdown: ^0.6.20
   #getx
   get: ^4.7.2
   # 网络请求
@@ -50,6 +51,28 @@ dependencies:
   easy_refresh: ^3.4.0
   #webview组件:
   webview_flutter: ^4.13.0
+  # 图片选择
+  image_picker: ^1.2.0
+  # 图片裁剪
+  image_cropper: ^11.0.0
+  # 图片压缩
+  flutter_image_compress: ^2.4.0
+  # 权限处理
+  permission_handler: ^12.0.1
+  # 路径操作
+  path_provider: ^2.1.5
+  path: ^1.9.1
+  #微信图片选择功能
+  wechat_assets_picker: ^9.8.0
+  #微信camera选择功能
+  wechat_camera_picker: ^4.4.0
+  #图片拓展
+  extended_image: ^10.0.1
+  #相册api管理
+  photo_manager: ^3.7.1
+    # 视频播放
+  video_player: ^2.8.1
+  cached_video_player_plus: ^4.0.4
 
 dev_dependencies:
   flutter_test:

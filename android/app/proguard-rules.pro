@@ -366,3 +366,9 @@ public static final int *;
 # UCrop 规则
 -keep class com.yalantis.ucrop.** { *; }
 -dontwarn com.yalantis.ucrop.**
+# Image Cropper
+-keep class androidx.appcompat.widget.** { *; }
+-keep class androidx.appcompat.app.AppCompatDelegate { *; }
+
+# Image Picker
+-keep class androidx.lifecycle.** { *; }

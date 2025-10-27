@@ -57,16 +57,28 @@ class HomeController extends GetxController {
       description: 'H5 ↔ Flutter 双向通信',
     ),
     DemoItem(
-      title: '自定义对话框演示',
-      route: Routes.CUSTOM_DIALOG_DEMO,
-      icon: '💬',
-      description: '各种自定义对话框样式',
-    ),
-    DemoItem(
       title: 'WebView MVVM 演示',
       route: Routes.WEBVIEW_MVVM_DEMO,
       icon: '🎯',
       description: 'MVVM 架构的 WebView',
+    ),
+    DemoItem(
+      title: '图片处理工具演示',
+      route: Routes.IMAGE_UTIL_DEMO,
+      icon: '📸',
+      description: '图片选择、裁剪、压缩、上传',
+    ),
+    DemoItem(
+      title: '视频播放器演示',
+      route: Routes.VIDEO_PLAYER_DEMO,
+      icon: '🎬',
+      description: '带缓存的视频播放器',
+    ),
+    DemoItem(
+      title: 'DeepSeek AI 演示',
+      route: Routes.DEEPSEEK_DEMO,
+      icon: '🤖',
+      description: 'AI聊天对话和代码生成',
     ),
   ];
 
