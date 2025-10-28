@@ -19,6 +19,7 @@ abstract class Routes {
   static const IMAGE_UTIL_DEMO = _Paths.IMAGE_UTIL_DEMO;
   static const VIDEO_PLAYER_DEMO = _Paths.VIDEO_PLAYER_DEMO;
   static const DEEPSEEK_DEMO = _Paths.DEEPSEEK_DEMO;
+  static const THEME_SELECTOR = _Paths.THEME_SELECTOR;
 }
 
 /// 路由路径
@@ -40,5 +41,6 @@ abstract class _Paths {
   static const IMAGE_UTIL_DEMO = '/image-util-demo';
   static const VIDEO_PLAYER_DEMO = '/video-player-demo';
   static const DEEPSEEK_DEMO = '/deepseek-demo';
+  static const THEME_SELECTOR = '/theme-selector';
 }
 

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape>
+            <gradient
+                android:angle="0"
+                android:endColor="#8E24AA"
+                android:startColor="#1E88E5"
+                android:type="linear" />
+
+        </shape>
+    </item>
+    <item
+        android:width="200dp"
+        android:height="200dp"
+        android:gravity="center">
+        <bitmap android:src="@drawable/bg_logo" />
+    </item>
+</layer-list>

@@ -28,6 +28,7 @@ import '../../pages/image_util_demo/image_util_demo_binding.dart';
 import '../../pages/video_player_demo/video_player_demo_page.dart';
 import '../../pages/deepseek_demo/deepseek_demo_view.dart';
 import '../../pages/deepseek_demo/deepseek_demo_binding.dart';
+import '../../app/widgets/theme_selector_widget.dart';
 
 part 'app_routes.dart';
 
@@ -140,6 +141,12 @@ class AppPages {
       name: _Paths.DEEPSEEK_DEMO,
       page: () => const DeepSeekDemoView(),
       binding: DeepSeekDemoBinding(),
+    ),
+
+    // 主题选择器
+    GetPage(
+      name: _Paths.THEME_SELECTOR,
+      page: () => const ThemeSelectorPage(),
     ),
 
   ];

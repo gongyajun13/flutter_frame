@@ -80,6 +80,12 @@ class HomeController extends GetxController {
       icon: '🤖',
       description: 'AI聊天对话和代码生成',
     ),
+    DemoItem(
+      title: '主题设置',
+      route: Routes.THEME_SELECTOR,
+      icon: '🎨',
+      description: '应用主题切换和自定义',
+    ),
   ];
 
   @override
