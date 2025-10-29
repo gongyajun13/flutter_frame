@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../widgets/cached_video_player_widget.dart';
+import '../../widgets/fullscreen_video_player_widget.dart';
 
 /// 视频播放器演示页面
 class VideoPlayerDemoPage extends StatefulWidget {
@@ -19,6 +20,7 @@ class _VideoPlayerDemoPageState extends State<VideoPlayerDemoPage> {
   VideoPlayerState _currentState = VideoPlayerState.loading;
   Duration _currentPosition = Duration.zero;
   Duration _totalDuration = Duration.zero;
+  bool _isFullscreen = false;
   
   @override
   Widget build(BuildContext context) {
@@ -155,6 +157,10 @@ class _VideoPlayerDemoPageState extends State<VideoPlayerDemoPage> {
               autoPlay: false,
               showControls: true,
               showProgressBar: true,
+              isFullscreen: _isFullscreen,
+              externalState: _currentState,
+              externalPosition: _currentPosition,
+              externalIsPlaying: _currentState == VideoPlayerState.playing,
               onStateChanged: (state) {
                 setState(() {
                   _currentState = state;
@@ -173,6 +179,7 @@ class _VideoPlayerDemoPageState extends State<VideoPlayerDemoPage> {
                   snackPosition: SnackPosition.BOTTOM,
                 );
               },
+              onFullscreenToggle: _openFullscreenPlayer,
             ),
           ),
           Padding(
@@ -220,6 +227,7 @@ class _VideoPlayerDemoPageState extends State<VideoPlayerDemoPage> {
                       _buildFeatureItem('✅', '时长显示'),
                       _buildFeatureItem('✅', '状态监听'),
                       _buildFeatureItem('✅', '加载/错误处理'),
+                      _buildFeatureItem('✅', '全屏播放'),
                     ],
                   ),
                 ),
@@ -228,6 +236,11 @@ class _VideoPlayerDemoPageState extends State<VideoPlayerDemoPage> {
           },
           icon: const Icon(Icons.info_outline),
           label: const Text('功能说明'),
+        ),
+        ElevatedButton.icon(
+          onPressed: _openFullscreenPlayer,
+          icon: const Icon(Icons.fullscreen),
+          label: const Text('全屏播放'),
         ),
       ],
     );
@@ -309,6 +322,9 @@ class _VideoPlayerDemoPageState extends State<VideoPlayerDemoPage> {
             _buildInstructionItem('2', '拖动进度条可以跳转到指定位置'),
             _buildInstructionItem('3', '点击播放/暂停按钮控制播放'),
             _buildInstructionItem('4', '视频会自动缓存，再次播放更流畅'),
+            _buildInstructionItem('5', '双击屏幕可以播放/暂停视频'),
+            _buildInstructionItem('6', '左右滑动可以快进/快退10秒'),
+            _buildInstructionItem('7', '点击音量按钮可以调节音量'),
           ],
         ),
       ),
@@ -354,4 +370,40 @@ class _VideoPlayerDemoPageState extends State<VideoPlayerDemoPage> {
       ),
     );
   }
+
+  /// 打开全屏播放器
+  void _openFullscreenPlayer() {
+    setState(() {
+      _isFullscreen = true;
+    });
+    
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => FullscreenVideoPlayerWidget(
+          videoUrl: _videoUrl,
+          coverImageUrl: _coverImageUrl,
+          currentPosition: _currentPosition,
+          isPlaying: _currentState == VideoPlayerState.playing,
+          onStateChanged: (state) {
+            setState(() {
+              _currentState = state;
+            });
+          },
+          onPositionChanged: (position, duration) {
+            setState(() {
+              _currentPosition = position;
+              _totalDuration = duration;
+            });
+          },
+          onExit: () {
+            setState(() {
+              _isFullscreen = false;
+            });
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+    );
+  }
 }
+

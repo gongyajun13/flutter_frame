@@ -15,13 +15,12 @@ enum VideoPlayerState {
 /// 缓存视频播放器Widget
 class CachedVideoPlayerWidget extends StatefulWidget {
   final String videoUrl;
-  final double? width;
-  final double? height;
   final bool autoPlay;
   final bool looping;
   final bool muted;
   final bool showControls;
   final bool showProgressBar;
+  final bool isFullscreen;
   final String? coverImageUrl;
   final Widget? placeholder;
   final Widget? errorWidget;
@@ -29,17 +28,21 @@ class CachedVideoPlayerWidget extends StatefulWidget {
   final Function(Duration position, Duration duration)? onPositionChanged;
   final VoidCallback? onPlaybackCompleted;
   final VoidCallback? onTap;
+  final VoidCallback? onFullscreenToggle;
+  final GlobalKey<_CachedVideoPlayerWidgetState>? playerKey;
+  final VideoPlayerState? externalState;
+  final Duration? externalPosition;
+  final bool? externalIsPlaying;
 
   const CachedVideoPlayerWidget({
     super.key,
     required this.videoUrl,
-    this.width,
-    this.height,
     this.autoPlay = false,
     this.looping = false,
     this.muted = false,
     this.showControls = true,
     this.showProgressBar = true,
+    this.isFullscreen = false,
     this.coverImageUrl,
     this.placeholder,
     this.errorWidget,
@@ -47,6 +50,11 @@ class CachedVideoPlayerWidget extends StatefulWidget {
     this.onPositionChanged,
     this.onPlaybackCompleted,
     this.onTap,
+    this.onFullscreenToggle,
+    this.playerKey,
+    this.externalState,
+    this.externalPosition,
+    this.externalIsPlaying,
   });
 
   @override
@@ -73,10 +81,34 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
     _initializePlayer();
   }
 
+  @override
+  void didUpdateWidget(CachedVideoPlayerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // 如果视频URL发生变化，重新初始化
+    if (oldWidget.videoUrl != widget.videoUrl) {
+      _initializePlayer();
+      return;
+    }
+    
+    // 同步外部状态
+    if (widget.externalState != null && widget.externalState != _currentState) {
+      _syncExternalState();
+    }
+    
+    if (widget.externalPosition != null && widget.externalPosition != _currentPosition) {
+      _syncExternalPosition();
+    }
+    
+    if (widget.externalIsPlaying != null) {
+      _syncExternalPlayingState();
+    }
+  }
+
   void _initializePlayer() async {
     // 先释放旧的controller
     await _disposeController();
-    
+
     try {
       setState(() {
         _currentState = VideoPlayerState.loading;
@@ -113,6 +145,11 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
       if (widget.autoPlay && _controller != null) {
         await _controller!.play();
       }
+      
+      // 同步外部状态
+      _syncExternalState();
+      _syncExternalPosition();
+      _syncExternalPlayingState();
     } catch (e) {
       debugPrint('视频初始化失败: $e');
       if (mounted) {
@@ -122,6 +159,42 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
         });
       }
       await _disposeController();
+    }
+  }
+
+  /// 同步外部状态
+  void _syncExternalState() {
+    if (widget.externalState != null && _controller != null) {
+      setState(() {
+        _currentState = widget.externalState!;
+      });
+    }
+  }
+
+  /// 同步外部播放位置
+  void _syncExternalPosition() {
+    if (widget.externalPosition != null && _controller != null) {
+      _controller!.seekTo(widget.externalPosition!);
+      setState(() {
+        _currentPosition = widget.externalPosition!;
+      });
+    }
+  }
+
+  /// 同步外部播放状态
+  void _syncExternalPlayingState() {
+    if (widget.externalIsPlaying != null && _controller != null) {
+      if (widget.externalIsPlaying! && !_controller!.value.isPlaying) {
+        _controller!.play();
+        setState(() {
+          _currentState = VideoPlayerState.playing;
+        });
+      } else if (!widget.externalIsPlaying! && _controller!.value.isPlaying) {
+        _controller!.pause();
+        setState(() {
+          _currentState = VideoPlayerState.paused;
+        });
+      }
     }
   }
 
@@ -253,6 +326,89 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
     super.dispose();
   }
 
+  /// 播放视频
+  Future<void> play() async {
+    if (_controller != null && _isInitialized) {
+      await _controller!.play();
+    }
+  }
+
+  /// 暂停视频
+  Future<void> pause() async {
+    if (_controller != null && _isInitialized) {
+      await _controller!.pause();
+    }
+  }
+
+  /// 切换播放/暂停状态
+  Future<void> togglePlayPause() async {
+    if (_controller != null && _isInitialized) {
+      if (_controller!.value.isPlaying) {
+        await _controller!.pause();
+      } else {
+        await _controller!.play();
+      }
+    }
+  }
+
+  /// 跳转到指定位置
+  Future<void> seekTo(Duration position) async {
+    if (_controller != null && _isInitialized) {
+      await _controller!.seekTo(position);
+    }
+  }
+
+  /// 设置音量
+  Future<void> setVolume(double volume) async {
+    if (_controller != null && _isInitialized) {
+      await _controller!.setVolume(volume);
+    }
+  }
+
+  /// 获取当前播放状态
+  VideoPlayerState get currentState => _currentState;
+
+  /// 获取当前播放位置
+  Duration get currentPosition => _currentPosition;
+
+  /// 获取总时长
+  Duration get totalDuration => _totalDuration;
+
+  /// 获取是否正在播放
+  bool get isPlaying => _currentState == VideoPlayerState.playing;
+
+  /// 根据屏幕尺寸动态计算播放按钮大小
+  double _getPlayButtonSize() {
+    final screenSize = MediaQuery.of(context).size;
+    final minDimension = screenSize.width < screenSize.height ? screenSize.width : screenSize.height;
+    // 播放按钮大小为屏幕最小尺寸的8-12%
+    return (minDimension * 0.1).clamp(40.0, 80.0);
+  }
+
+  /// 根据屏幕尺寸动态计算进度条高度
+  double _getProgressBarHeight() {
+    final screenSize = MediaQuery.of(context).size;
+    final minDimension = screenSize.width < screenSize.height ? screenSize.width : screenSize.height;
+    // 进度条高度为屏幕最小尺寸的0.5-1%
+    return (minDimension * 0.006).clamp(3.0, 6.0);
+  }
+
+  /// 根据屏幕尺寸动态计算文字大小
+  double _getTextSize() {
+    final screenSize = MediaQuery.of(context).size;
+    final minDimension = screenSize.width < screenSize.height ? screenSize.width : screenSize.height;
+    // 文字大小为屏幕最小尺寸的1.5-3%
+    return (minDimension * 0.025).clamp(10.0, 16.0);
+  }
+
+  /// 根据屏幕尺寸动态计算间距
+  double _getSpacing() {
+    final screenSize = MediaQuery.of(context).size;
+    final minDimension = screenSize.width < screenSize.height ? screenSize.width : screenSize.height;
+    // 间距为屏幕最小尺寸的1-2%
+    return (minDimension * 0.015).clamp(8.0, 16.0);
+  }
+
   /// 开始长按（2倍速播放）
   void _startLongPress() {
     if (!_isInitialized || _controller == null) return;
@@ -319,6 +475,13 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
     }
   }
 
+  /// 处理全屏切换
+  void _handleFullscreenToggle() {
+    widget.onFullscreenToggle?.call();
+    // 操作后临时显示控制器
+    _showControlsTemporarily();
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -327,8 +490,8 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
       onLongPressEnd: (_) => _endLongPress(),
       onLongPressCancel: () => _endLongPress(),
       child: Container(
-        width: widget.width,
-        height: widget.height,
+        width: double.infinity,
+        height: double.infinity,
         color: Colors.black,
         child: Stack(
           children: [
@@ -383,32 +546,62 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
     
     return Stack(
       children: [
-        // 背景渐变
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.transparent,
-                Colors.transparent,
-                Colors.black.withOpacity(0.7),
-              ],
+        // 居中的播放暂停按钮
+        Center(
+          child: GestureDetector(
+            onTap: _togglePlayPause,
+            child: Container(
+              width: _getPlayButtonSize(),
+              height: _getPlayButtonSize(),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: _getPlayButtonSize() * 0.1,
+                    offset: Offset(0, _getPlayButtonSize() * 0.03),
+                  ),
+                ],
+              ),
+              child: Icon(
+                _controller!.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                size: _getPlayButtonSize() * 0.5,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
         
-        // 居中的播放暂停按钮
-        Center(
-          child: IconButton(
-            icon: Icon(
-              _controller!.value.isPlaying ? Icons.pause : Icons.play_arrow,
-              size: 48.sp,
-              color: Colors.white,
+        // 右上角全屏按钮（常驻显示）
+        if (widget.onFullscreenToggle != null)
+          Positioned(
+            top: _getSpacing(),
+            right: _getSpacing(),
+            child: GestureDetector(
+              onTap: _handleFullscreenToggle,
+              child: Container(
+                width: _getSpacing() * 4,
+                height: _getSpacing() * 4,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: _getSpacing() * 0.2,
+                      offset: Offset(0, _getSpacing() * 0.1),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  widget.isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
+                  size: _getSpacing()*2 ,
+                  color: Colors.white,
+                ),
+              ),
             ),
-            onPressed: _togglePlayPause,
           ),
-        ),
         
         // 底部的时间和进度条
         if (widget.showProgressBar)
@@ -417,7 +610,6 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
             right: 0,
             bottom: 0,
             child: Container(
-              padding: EdgeInsets.only(bottom: 16.h),
               child: _buildProgressBar(),
             ),
           ),
@@ -427,14 +619,22 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
 
   /// 构建长按提示覆盖层
   Widget _buildLongPressOverlay() {
+    final overlaySize = _getSpacing() * 0.8;
     return Positioned(
-      top: 20.h,
-      right: 20.w,
+      top: _getSpacing(),
+      right: _getSpacing(),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+        padding: EdgeInsets.symmetric(horizontal: overlaySize, vertical: overlaySize * 0.5),
         decoration: BoxDecoration(
           color: Colors.blue.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(overlaySize),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: overlaySize * 0.25,
+              offset: Offset(0, overlaySize * 0.125),
+            ),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -442,15 +642,22 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
             Icon(
               Icons.fast_forward,
               color: Colors.white,
-              size: 16.sp,
+              size: overlaySize,
             ),
-            SizedBox(width: 4.w),
+            SizedBox(width: overlaySize * 0.3),
             Text(
               '2x',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 14.sp,
+                fontSize: overlaySize * 0.8,
                 fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 1,
+                    offset: Offset(0, 1),
+                  ),
+                ],
               ),
             ),
           ],
@@ -476,10 +683,15 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
     }
     
     // 根据总时长确定时间显示区域的固定宽度
-    final timeWidth = _totalDuration.inHours > 0 ? 60.w : 45.w;
+    // 基于屏幕尺寸和时长格式动态计算宽度
+    final screenSize = MediaQuery.of(context).size;
+    final minDimension = screenSize.width < screenSize.height ? screenSize.width : screenSize.height;
+    final timeWidth = _totalDuration.inHours > 0 
+        ? (minDimension * 0.12).clamp(60.0, 100.0)  // 有小时时更宽
+        : (minDimension * 0.1).clamp(50.0, 80.0);   // 无小时时稍窄
     
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      padding: EdgeInsets.symmetric(horizontal: _getSpacing(),vertical: _getSpacing()),
       child: Row(
         children: [
           // 当前时间（固定宽度）
@@ -489,14 +701,21 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
               _formatDuration(_isDragging ? _dragPosition : _currentPosition),
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w500,
+                fontSize: _getTextSize(),
+                fontWeight: FontWeight.w600,
+                shadows: [
+                  Shadow(
+                    color: Colors.black.withOpacity(0.8),
+                    blurRadius: 2,
+                    offset: Offset(0, 1),
+                  ),
+                ],
               ),
               textAlign: TextAlign.left,
             ),
           ),
           
-          SizedBox(width: 12.w),
+          SizedBox(width: _getSpacing() * 0.5),
           
           // 进度条（占据剩余空间）
           Expanded(
@@ -576,31 +795,31 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
                 _controller!.seekTo(targetPosition);
               },
               child: Container(
-                height: 20.h, // 增加触摸区域高度
+                height: _getSpacing() * 1.5, // 动态触摸区域高度
                 alignment: Alignment.center,
                 child: Stack(
                   children: [
                     // 背景进度条
                     Container(
-                      height: 6.h,
+                      height: _getProgressBarHeight(),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(3.r),
+                        color: Colors.white.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(_getProgressBarHeight() * 0.5),
                       ),
                     ),
                     
                     // 缓存进度条
                     if (bufferProgress > 0)
                       Container(
-                        height: 6.h,
+                        height: _getProgressBarHeight(),
                         width: double.infinity,
                         child: FractionallySizedBox(
                           alignment: Alignment.centerLeft,
                           widthFactor: bufferProgress.clamp(0.0, 1.0),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.4),
-                              borderRadius: BorderRadius.circular(3.r),
+                              color: Colors.white.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(_getProgressBarHeight() * 0.5),
                             ),
                           ),
                         ),
@@ -608,7 +827,7 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
                     
                     // 播放进度条
                     Container(
-                      height: 6.h,
+                      height: _getProgressBarHeight(),
                       width: double.infinity,
                       child: FractionallySizedBox(
                         alignment: Alignment.centerLeft,
@@ -618,7 +837,7 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.blue,
-                            borderRadius: BorderRadius.circular(3.r),
+                            borderRadius: BorderRadius.circular(_getProgressBarHeight() * 0.5),
                           ),
                         ),
                       ),
@@ -629,7 +848,7 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
             ),
           ),
           
-          SizedBox(width: 12.w),
+          SizedBox(width: _getSpacing() * 0.5),
           
           // 总时长（固定宽度）
           SizedBox(
@@ -638,8 +857,15 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
               _formatDuration(_totalDuration),
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w500,
+                fontSize: _getTextSize(),
+                fontWeight: FontWeight.w600,
+                shadows: [
+                  Shadow(
+                    color: Colors.black.withOpacity(0.8),
+                    blurRadius: 2,
+                    offset: Offset(0, 1),
+                  ),
+                ],
               ),
               textAlign: TextAlign.right,
             ),
@@ -676,10 +902,6 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
                 child: Container(
                   width: 64.w,
                   height: 64.w,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
-                    shape: BoxShape.circle,
-                  ),
                   child: Icon(
                     Icons.play_arrow,
                     size: 36.sp,
@@ -695,6 +917,7 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
   }
 
   Widget _buildDefaultPlaceholder() {
+    final loadingSize = _getSpacing() * 2.5;
     return Container(
       color: Colors.black,
       child: Center(
@@ -703,21 +926,29 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              width: 48.w,
-              height: 48.w,
-              child: const CircularProgressIndicator(
+              width: loadingSize,
+              height: loadingSize,
+              child: CircularProgressIndicator(
                 color: Colors.white,
-                strokeWidth: 3,
+                strokeWidth: loadingSize * 0.06,
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: _getSpacing()),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              padding: EdgeInsets.symmetric(horizontal: _getSpacing() * 1.5),
               child: Text(
                 '视频加载中...',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 14.sp,
+                  fontSize: _getTextSize(),
+                  fontWeight: FontWeight.w500,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withOpacity(0.8),
+                      blurRadius: 2,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -729,37 +960,53 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
   }
 
   Widget _buildDefaultErrorWidget() {
+    final errorSize = _getSpacing() * 2.5;
     return Container(
       color: Colors.black,
       child: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(16.w),
+          padding: EdgeInsets.all(_getSpacing()),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.error_outline,
-                size: 48.sp,
-                color: Colors.white.withOpacity(0.7),
+                size: errorSize,
+                color: Colors.white.withOpacity(0.8),
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: _getSpacing()),
               Text(
                 '视频加载失败',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 14.sp,
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: _getTextSize(),
+                  fontWeight: FontWeight.w500,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withOpacity(0.8),
+                      blurRadius: 2,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
                 ),
               ),
               if (_errorMessage != null) ...[
-                SizedBox(height: 8.h),
+                SizedBox(height: _getSpacing() * 0.5),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  padding: EdgeInsets.symmetric(horizontal: _getSpacing() * 1.5),
                   child: Text(
                     _errorMessage!,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
-                      fontSize: 12.sp,
+                      color: Colors.white.withOpacity(0.6),
+                      fontSize: _getTextSize() * 0.85,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.8),
+                          blurRadius: 1,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 3,
@@ -767,15 +1014,18 @@ class _CachedVideoPlayerWidgetState extends State<CachedVideoPlayerWidget> {
                   ),
                 ),
               ],
-              SizedBox(height: 16.h),
+              SizedBox(height: _getSpacing()),
               ElevatedButton.icon(
                 onPressed: _initializePlayer,
-                icon: Icon(Icons.refresh, size: 18.sp),
-                label: Text('重试', style: TextStyle(fontSize: 14.sp)),
+                icon: Icon(Icons.refresh, size: _getTextSize()),
+                label: Text('重试', style: TextStyle(fontSize: _getTextSize(), fontWeight: FontWeight.w500)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white.withOpacity(0.2),
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(horizontal: _getSpacing() * 2, vertical: _getSpacing() * 0.8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(_getSpacing() * 1.5),
+                  ),
                 ),
               ),
             ],
