@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <external-files-path name="my_images" path="Pictures" />
+    <!-- 允许访问 app 专属外部目录 /Android/data/<pkg>/files/** -->
+    <external-files-path name="app_external" path="." />
+    <!-- 允许访问缓存目录 -->
     <cache-path name="my_cache" path="." />
+    <!--（可选）整个外部存储根目录；尽量避免使用，仅作兼容 -->
     <external-path name="external_files" path="." />
 </paths>

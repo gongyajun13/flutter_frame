@@ -47,6 +47,8 @@ dependencies:
   shared_preferences: ^2.5.3
   # URL启动器
   url_launcher: ^6.2.2
+  # 应用信息（版本号、构建号等）
+  package_info_plus: 8.0.2
   # 刷新组件
   easy_refresh: ^3.4.0
   #webview组件:

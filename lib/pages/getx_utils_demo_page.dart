@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../app/routes/app_pages.dart';
 import '../utils/getx_utils.dart';
+import '../utils/app_update_util.dart';
 
 /// GetX工具类演示页面
 class GetXUtilsDemoPage extends StatefulWidget {
@@ -175,6 +176,12 @@ class _GetXUtilsDemoPageState extends State<GetXUtilsDemoPage> {
                   '网络请求模拟',
                   Colors.blue,
                   () => _simulateNetworkRequest(),
+                ),
+                SizedBox(height: 12.h),
+                _buildButton(
+                  '检查更新（演示）',
+                  Colors.purple,
+                  () => _showUpdateDemo(),
                 ),
                 SizedBox(height: 12.h),
                 _buildButton(
@@ -619,5 +626,23 @@ class _GetXUtilsDemoPageState extends State<GetXUtilsDemoPage> {
         type: SnackBarType.warning,
       );
     });
+  }
+
+  /// 显示应用更新演示（使用模拟数据直接弹窗）
+  void _showUpdateDemo() async {
+    await AppUpdateUtil.checkAndUpdate(
+      silent: true,
+      fetcher: () async {
+        return AppUpdateInfo(
+          latestVersion: '9.9.9',
+          latestBuild: 99999,
+          forceUpdate: false,
+          title: '发现新版本',
+          description: '1. 提升稳定性\n2. 修复若干已知问题\n3. 优化用户体验',
+          androidApkUrl: 'https://aiera-android.oss-cn-shanghai.aliyuncs.com/aiera_debug/39940/hotdog-3.99.40-39940-20251024094111.apk',
+          iosAppId: '1234567890',
+        );
+      },
+    );
   }
 }
