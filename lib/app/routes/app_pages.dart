@@ -13,21 +13,18 @@ import '../../pages/local_cache_demo/local_cache_demo_page.dart';
 import '../../pages/local_cache_demo/local_cache_demo_binding.dart';
 import '../../pages/url_launcher_demo/url_launcher_demo_page.dart';
 import '../../pages/url_launcher_demo/url_launcher_demo_binding.dart';
-import '../../pages/fullscreen_webview_demo/fullscreen_webview_demo_page.dart';
-import '../../pages/fullscreen_webview_demo/fullscreen_webview_demo_binding.dart';
-import '../../pages/webview_bridge_demo/webview_bridge_demo_page.dart';
-import '../../pages/webview_bridge_demo/webview_bridge_demo_binding.dart';
 import '../../pages/custom_dialog_demo/custom_dialog_demo_page.dart';
 import '../../pages/custom_dialog_demo/custom_dialog_demo_binding.dart';
-import '../../pages/webview_mvvm_demo/webview_mvvm_demo_page.dart';
-import '../../pages/webview_mvvm_demo/webview_mvvm_demo_binding.dart';
-import '../../pages/webview_mvvm_demo/webview_mvvm_page.dart';
-import '../../pages/webview_mvvm_demo/webview_mvvm_binding.dart';
 import '../../pages/image_util_demo/image_util_demo_view.dart';
 import '../../pages/image_util_demo/image_util_demo_binding.dart';
 import '../../pages/video_player_demo/video_player_demo_page.dart';
+import '../../pages/video_player_demo/video_player_demo_binding.dart';
 import '../../pages/deepseek_demo/deepseek_demo_view.dart';
 import '../../pages/deepseek_demo/deepseek_demo_binding.dart';
+import '../../pages/permission_demo/permission_demo_page.dart';
+import '../../pages/permission_demo/permission_demo_binding.dart';
+import '../../pages/webview_demo/webview_demo_page.dart';
+import '../../pages/webview_demo/webview_demo_binding.dart';
 import '../../app/widgets/theme_selector_widget.dart';
 
 part 'app_routes.dart';
@@ -88,39 +85,11 @@ class AppPages {
       binding: UrlLauncherDemoBinding(),
     ),
     
-    // 全屏 WebView 演示
-    GetPage(
-      name: _Paths.FULLSCREEN_WEBVIEW_DEMO,
-      page: () => const FullScreenWebViewDemoPage(),
-      binding: FullScreenWebViewDemoBinding(),
-    ),
-    
-    // WebView 桥接演示
-    GetPage(
-      name: _Paths.WEBVIEW_BRIDGE_DEMO,
-      page: () => const WebViewBridgeDemoPage(),
-      binding: WebViewBridgeDemoBinding(),
-    ),
-    
     // 自定义对话框演示
     GetPage(
       name: _Paths.CUSTOM_DIALOG_DEMO,
       page: () => const CustomDialogDemoPage(),
       binding: CustomDialogDemoBinding(),
-    ),
-    
-    // WebView MVVM 演示入口
-    GetPage(
-      name: _Paths.WEBVIEW_MVVM_DEMO,
-      page: () => const WebViewMvvmDemoPage(),
-      binding: WebViewMvvmDemoBinding(),
-    ),
-    
-    // WebView MVVM 页面
-    GetPage(
-      name: _Paths.WEBVIEW_MVVM,
-      page: () => const WebViewMvvmPage(),
-      binding: WebViewMvvmBinding(),
     ),
     
     // 图片处理工具演示
@@ -134,6 +103,7 @@ class AppPages {
     GetPage(
       name: _Paths.VIDEO_PLAYER_DEMO,
       page: () => const VideoPlayerDemoPage(),
+      binding: VideoPlayerDemoBinding(),
     ),
 
     // DeepSeek API 演示
@@ -147,6 +117,20 @@ class AppPages {
     GetPage(
       name: _Paths.THEME_SELECTOR,
       page: () => const ThemeSelectorPage(),
+    ),
+
+    // 权限请求工具演示
+    GetPage(
+      name: _Paths.PERMISSION_DEMO,
+      page: () => const PermissionDemoPage(),
+      binding: PermissionDemoBinding(),
+    ),
+
+    // WebView 功能演示（整合版）
+    GetPage(
+      name: _Paths.WEBVIEW_DEMO,
+      page: () => const WebViewDemoPage(),
+      binding: WebViewDemoBinding(),
     ),
 
   ];

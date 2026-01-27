@@ -116,6 +116,11 @@ abstract class BaseNetworkRequest<T> {
         // 调用成功回调
         onSuccess(response.data as T);
       } else {
+        // 确保 loading 已关闭（双重保障）
+        if (showLoading) {
+          _hideLoading();
+        }
+        
         // 显示错误提示
         _showError(response.message);
         // 调用失败回调
@@ -124,7 +129,9 @@ abstract class BaseNetworkRequest<T> {
       
     } catch (e) {
       // 隐藏loading
-      _hideLoading();
+      if (showLoading) {
+        _hideLoading();
+      }
       
       // 显示异常提示
       _showError('网络请求异常: $e');
@@ -161,9 +168,23 @@ abstract class BaseNetworkRequest<T> {
   }
   
   /// 隐藏loading
+  /// 只关闭 dialog，不影响页面
   void _hideLoading() {
     if (showLoading && Get.isDialogOpen == true) {
-      Get.back();
+      try {
+        Get.back();
+      } catch (e) {
+        // 如果 Get.back() 失败，尝试延迟重试
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (showLoading && Get.isDialogOpen == true) {
+            try {
+              Get.back();
+            } catch (e2) {
+              // 静默失败
+            }
+          }
+        });
+      }
     }
   }
   

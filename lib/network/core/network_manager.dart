@@ -245,13 +245,15 @@ class NetworkManager {
       // 执行请求
       final response = await request();
 
-      // 隐藏loading
-      if (showLoading) {
-        _hideLoading();
-      }
-
       // 处理响应
       if (response.success) {
+        // 先隐藏loading
+        if (showLoading) {
+          _hideLoading();
+          // 等待一小段时间确保 dialog 关闭后再显示提示
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
+        
         // 显示成功提示
         if (successText != null && successText.isNotEmpty) {
           _showSuccess(successText);
@@ -259,6 +261,13 @@ class NetworkManager {
         // 调用成功回调
         onSuccess(response.data as T);
       } else {
+        // 先隐藏loading
+        if (showLoading) {
+          _hideLoading();
+          // 等待一小段时间确保 dialog 关闭后再显示提示
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
+        
         // 显示错误提示
         if (showError) {
           _showError(response.message);
@@ -271,6 +280,8 @@ class NetworkManager {
       // 隐藏loading
       if (showLoading) {
         _hideLoading();
+        // 等待一小段时间确保 dialog 关闭后再显示提示
+        await Future.delayed(const Duration(milliseconds: 100));
       }
 
       // 显示异常提示

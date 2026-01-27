@@ -129,15 +129,7 @@ class ThemeModeSelector extends StatelessWidget {
       onTap: () async {
         await controller.switchThemeMode(mode);
         // 显示切换成功提示
-        Get.snackbar(
-          '主题切换成功',
-          '已切换到$title模式',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: controller.currentTheme.value.primaryColor.withOpacity(0.8),
-          colorText: Colors.white,
-          icon: const Icon(Icons.check_circle, color: Colors.white),
-          duration: const Duration(seconds: 2),
-        );
+        controller.showSuccess('已切换到$title模式');
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -338,7 +330,7 @@ class _CustomThemesSectionState extends State<CustomThemesSection> {
     if (mounted) {
       setState(() {});
     }
-    Get.snackbar('成功', '自定义主题已删除');
+    controller.showSuccess('自定义主题已删除');
   }
 }
 
@@ -427,7 +419,7 @@ class _ThemeHistorySectionState extends State<ThemeHistorySection> {
     final controller = Get.find<ThemeController>();
     await controller.themeService.clearAllThemeSettings();
     await _loadThemeHistory();
-    Get.snackbar('成功', '历史记录已清除');
+    controller.showSuccess('历史记录已清除');
   }
 }
 
@@ -481,15 +473,7 @@ class ThemePreviewCard extends StatelessWidget {
       onTap: () {
         onTap();
         // 显示切换成功提示
-        Get.snackbar(
-          '主题切换成功',
-          '已切换到${theme.name}',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: theme.primaryColor.withOpacity(0.8),
-          colorText: Colors.white,
-          icon: const Icon(Icons.check_circle, color: Colors.white),
-          duration: const Duration(seconds: 2),
-        );
+        Get.find<ThemeController>().showSuccess('已切换到${theme.name}');
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

@@ -1,116 +1,128 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../base/base_page.dart';
+import '../../theme/app_design_tokens.dart';
+import '../../widgets/app_card.dart';
+import '../../widgets/app_button.dart';
 import 'home_controller.dart';
 
 /// 首页
-class HomePage extends GetView<HomeController> {
+class HomePage extends BaseScrollPage<HomeController> {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Flutter Frame 演示',
-          style: TextStyle(fontSize: 18.sp),
-        ),
-        centerTitle: true,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.blue.shade600,
-                Colors.purple.shade600,
-              ],
-            ),
-          ),
-        ),
+  String? get pageTitle => '功能演示';
+
+  @override
+  PreferredSizeWidget? buildAppBar(BuildContext context) {
+    return AppBar(
+      title: Text(
+        pageTitle!,
+        style: TextStyle(fontSize: AppDesignTokens.fontSize18),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 计数器区域
-              _buildCounterSection(),
-              
-              SizedBox(height: 24.h),
-              
-              // 演示列表
-              _buildDemoList(),
-              
-              SizedBox(height: 24.h),
+      centerTitle: true,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppDesignTokens.primaryColor,
+              AppDesignTokens.secondaryColor,
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: controller.incrementCounter,
-        tooltip: '增加',
-        child: Icon(Icons.add, size: 24.sp),
-      ),
     );
   }
 
+  @override
+  EdgeInsets get pagePadding => EdgeInsets.symmetric(
+        horizontal: AppDesignTokens.spacing20,
+        vertical: AppDesignTokens.spacing16,
+      );
+
+  @override
+  Widget buildScrollContent(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 计数器区域
+        _buildCounterSection(),
+        
+        SizedBox(height: AppDesignTokens.spacingV24),
+        
+        // 演示列表
+        _buildDemoList(),
+        
+        SizedBox(height: AppDesignTokens.spacingV24),
+      ],
+    );
+  }
+
+  /// 构建浮动操作按钮（可选）
+  Widget? buildFloatingActionButton(BuildContext context) {
+    return FloatingActionButton(
+      onPressed: controller.incrementCounter,
+      tooltip: '增加',
+      child: Icon(Icons.add, size: AppDesignTokens.iconSizeMedium),
+    );
+  }
+
+  // 移除重写的 build 方法，使用 BasePage 的默认实现
+  // BasePage 已经使用 GetBuilder<ThemeController> 包裹，会自动响应主题变化
+
   /// 构建计数器区域
   Widget _buildCounterSection() {
-    return Container(
-      padding: EdgeInsets.all(24.w),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.blue.shade50,
-            Colors.purple.shade50,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.blue.withOpacity(0.1),
-            blurRadius: 20.r,
-            offset: Offset(0, 10.h),
-          ),
-        ],
+    return AppCard(
+      size: AppCardSize.large,
+      backgroundColor: Colors.transparent,
+      showShadow: true,
+      shadow: AppDesignTokens.shadowWithColor(
+        AppDesignTokens.primaryColor,
+        opacity: 0.1,
       ),
-      child: Column(
-        children: [
-          Text(
-            '你已经点击了这么多次：',
-            style: TextStyle(
-              fontSize: 16.sp,
-              color: Colors.grey.shade700,
-            ),
+      padding: EdgeInsets.all(AppDesignTokens.spacing24),
+      borderRadius: AppDesignTokens.radius20,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppDesignTokens.primaryColor.withOpacity(0.1),
+              AppDesignTokens.secondaryColor.withOpacity(0.1),
+            ],
           ),
-          SizedBox(height: 12.h),
-          Obx(() => Text(
-                '${controller.counter}',
-                style: TextStyle(
-                  fontSize: 48.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue.shade700,
-                ),
-              )),
-          SizedBox(height: 16.h),
-          ElevatedButton.icon(
-            onPressed: controller.resetCounter,
-            icon: Icon(Icons.refresh, size: 18.sp),
-            label: Text('重置', style: TextStyle(fontSize: 14.sp)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade400,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(AppDesignTokens.radius20),
+        ),
+        child: Column(
+          children: [
+            Text(
+              '你已经点击了这么多次：',
+              style: TextStyle(
+                fontSize: AppDesignTokens.fontSize16,
+                color: AppDesignTokens.textSecondary,
               ),
             ),
-          ),
-        ],
+            SizedBox(height: AppDesignTokens.spacingV12),
+            Obx(() => Text(
+                  '${controller.counter}',
+                  style: TextStyle(
+                    fontSize: AppDesignTokens.fontSize48,
+                    fontWeight: AppDesignTokens.fontWeightBold,
+                    color: AppDesignTokens.primaryColor,
+                  ),
+                )),
+            SizedBox(height: AppDesignTokens.spacingV16),
+            AppButton.danger(
+              text: '重置',
+              onPressed: controller.resetCounter,
+              icon: Icons.refresh,
+              size: AppButtonSize.medium,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -123,14 +135,14 @@ class HomePage extends GetView<HomeController> {
         Text(
           '功能演示',
           style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey.shade800,
+            fontSize: AppDesignTokens.fontSize20,
+            fontWeight: AppDesignTokens.fontWeightBold,
+            color: AppDesignTokens.textPrimary,
           ),
         ),
-        SizedBox(height: 16.h),
+        SizedBox(height: AppDesignTokens.spacingV16),
         ...controller.demoItems.map((item) => Padding(
-              padding: EdgeInsets.only(bottom: 12.h),
+              padding: EdgeInsets.only(bottom: AppDesignTokens.spacingV12),
               child: _buildDemoCard(item),
             )),
       ],
@@ -139,83 +151,64 @@ class HomePage extends GetView<HomeController> {
 
   /// 构建演示卡片
   Widget _buildDemoCard(DemoItem item) {
-    return InkWell(
+    return AppCard(
       onTap: () => controller.navigateToDemo(item.route),
-      borderRadius: BorderRadius.circular(16.r),
-      child: Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: Colors.grey.shade200,
-            width: 1.w,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10.r,
-              offset: Offset(0, 4.h),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // 图标
-            Container(
-              width: 48.w,
-              height: 48.w,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.blue.shade400,
-                    Colors.purple.shade400,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Center(
-                child: Text(
-                  item.icon,
-                  style: TextStyle(fontSize: 24.sp),
-                ),
-              ),
-            ),
-            SizedBox(width: 16.w),
-            // 文字信息
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade800,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    item.description,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
+      child: Row(
+        children: [
+          // 图标
+          Container(
+            width: AppDesignTokens.spacing48,
+            height: AppDesignTokens.spacing48,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppDesignTokens.primaryLight,
+                  AppDesignTokens.secondaryLight,
                 ],
               ),
+              borderRadius: BorderRadius.circular(AppDesignTokens.radius12),
             ),
-            // 箭头
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 16.sp,
-              color: Colors.grey.shade400,
+            child: Center(
+              child: Text(
+                item.icon,
+                style: TextStyle(fontSize: AppDesignTokens.fontSize24),
+              ),
             ),
-          ],
-        ),
+          ),
+          SizedBox(width: AppDesignTokens.spacing16),
+          // 文字信息
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  style: TextStyle(
+                    fontSize: AppDesignTokens.fontSize15,
+                    fontWeight: AppDesignTokens.fontWeightSemiBold,
+                    color: AppDesignTokens.textPrimary,
+                  ),
+                ),
+                SizedBox(height: AppDesignTokens.spacingV4),
+                Text(
+                  item.description,
+                  style: TextStyle(
+                    fontSize: AppDesignTokens.fontSize12,
+                    color: AppDesignTokens.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // 箭头
+          Icon(
+            Icons.arrow_forward_ios,
+            size: AppDesignTokens.iconSizeSmall,
+            color: AppDesignTokens.textDisabled,
+          ),
+        ],
       ),
     );
   }

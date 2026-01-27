@@ -3,20 +3,39 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import '../../base/base_page.dart';
+import '../../theme/app_design_tokens.dart';
 import 'deepseek_demo_controller.dart';
 import '../../network/config/deepseek_config.dart';
 import '../../network/services/deepseek_service.dart';
 
 /// DeepSeek 演示页面视图 - 对话主导设计
-class DeepSeekDemoView extends GetView<DeepSeekDemoController> {
+class DeepSeekDemoView extends BasePage<DeepSeekDemoController> {
   const DeepSeekDemoView({super.key});
+
+  @override
+  String? get pageTitle => null; // 使用自定义 AppBar
+
+  @override
+  bool get showAppBar => true;
+
+  @override
+  PreferredSizeWidget? buildAppBar(BuildContext context) {
+    return _buildAppBar();
+  }
+
+  @override
+  Widget buildContent(BuildContext context) {
+    // 这个页面有特殊的布局，需要重写 build 方法
+    return const SizedBox.shrink();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: AppDesignTokens.grey50,
       resizeToAvoidBottomInset: true, // 避免键盘遮挡
-      appBar: _buildAppBar(),
+      appBar: buildAppBar(context),
       body: Column(
         children: [
           // 对话区域 - 占据主要空间
@@ -557,14 +576,7 @@ class DeepSeekDemoView extends GetView<DeepSeekDemoController> {
                             Clipboard.setData(
                               ClipboardData(text: controller.codeResponse.value),
                             );
-                            Get.snackbar(
-                              '已复制',
-                              '内容已复制到剪贴板',
-                              snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: Colors.green.withOpacity(0.8),
-                              colorText: Colors.white,
-                              duration: const Duration(seconds: 2),
-                            );
+                            controller.showSuccess('内容已复制到剪贴板');
                           },
                           child: Container(
                             padding: EdgeInsets.symmetric(
@@ -690,43 +702,49 @@ class DeepSeekDemoView extends GetView<DeepSeekDemoController> {
   /// 构建空状态
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: EdgeInsets.all(40.w),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.blue.shade400,
-                  Colors.purple.shade400,
-                ],
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: EdgeInsets.all(40.w),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.blue.shade400,
+                      Colors.purple.shade400,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(50.r),
+                ),
+                child: Text(
+                  '🤖',
+                  style: TextStyle(fontSize: 60.sp),
+                ),
               ),
-              borderRadius: BorderRadius.circular(50.r),
-            ),
-            child: Text(
-              '🤖',
-              style: TextStyle(fontSize: 60.sp),
-            ),
+              SizedBox(height: 32.h),
+              Text(
+                '开始与AI对话',
+                style: TextStyle(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade800,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                '输入消息开始智能对话体验',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 32.h),
-          Text(
-            '开始与AI对话',
-            style: TextStyle(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade800,
-            ),
-          ),
-          SizedBox(height: 12.h),
-          Text(
-            '输入消息开始智能对话体验',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: Colors.grey.shade600,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -880,26 +898,32 @@ class DeepSeekDemoView extends GetView<DeepSeekDemoController> {
   /// 构建代码加载状态
   Widget _buildCodeLoadingState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 40.w,
-            height: 40.w,
-            child: CircularProgressIndicator(
-              strokeWidth: 3.w,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.orange.shade400),
-            ),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 40.w,
+                height: 40.w,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3.w,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.orange.shade400),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'AI正在生成代码...',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 16.h),
-          Text(
-            'AI正在生成代码...',
-            style: TextStyle(
-              fontSize: 16.sp,
-              color: Colors.grey.shade600,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -907,43 +931,49 @@ class DeepSeekDemoView extends GetView<DeepSeekDemoController> {
   /// 构建代码空状态
   Widget _buildCodeEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: EdgeInsets.all(40.w),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.orange.shade400,
-                  Colors.red.shade400,
-                ],
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: EdgeInsets.all(40.w),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.orange.shade400,
+                      Colors.red.shade400,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(50.r),
+                ),
+                child: Text(
+                  '💻',
+                  style: TextStyle(fontSize: 60.sp),
+                ),
               ),
-              borderRadius: BorderRadius.circular(50.r),
-            ),
-            child: Text(
-              '💻',
-              style: TextStyle(fontSize: 60.sp),
-            ),
+              SizedBox(height: 32.h),
+              Text(
+                '代码助手已就绪',
+                style: TextStyle(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade800,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                '输入代码需求或代码片段开始使用',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 32.h),
-          Text(
-            '代码助手已就绪',
-            style: TextStyle(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade800,
-            ),
-          ),
-          SizedBox(height: 12.h),
-          Text(
-            '输入代码需求或代码片段开始使用',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: Colors.grey.shade600,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -1397,6 +1427,50 @@ class DeepSeekDemoView extends GetView<DeepSeekDemoController> {
                           },
                     )),
                     
+                    // 使用默认密钥按钮
+                    SizedBox(height: 8.h),
+                    Builder(
+                      builder: (context) {
+                        final hasDefaultKey = controller.hasDefaultKey;
+                        if (!hasDefaultKey) {
+                          return const SizedBox.shrink();
+                        }
+                        return Container(
+                          margin: EdgeInsets.only(bottom: 8.h),
+                          child: OutlinedButton.icon(
+                            onPressed: controller.useDefaultKey,
+                            icon: Icon(
+                              Icons.auto_awesome,
+                              size: 16.sp,
+                              color: Colors.blue.shade600,
+                            ),
+                            label: Text(
+                              '使用默认密钥',
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: Colors.blue.shade600,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16.w,
+                                vertical: 10.h,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              side: BorderSide(
+                                color: Colors.blue.shade300,
+                                width: 1.5.w,
+                              ),
+                              backgroundColor: Colors.blue.shade50,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    
                     // 验证信息
                     SizedBox(height: 8.h),
                     Obx(() => AnimatedContainer(
@@ -1628,13 +1702,7 @@ class DeepSeekDemoView extends GetView<DeepSeekDemoController> {
                                       Get.back(); // 关闭确认对话框
                                       Get.back(); // 关闭设置对话框
                                       
-                                      Get.snackbar(
-                                        '已清除',
-                                        'API密钥已清除',
-                                        snackPosition: SnackPosition.TOP,
-                                        backgroundColor: Colors.orange.withOpacity(0.8),
-                                        colorText: Colors.white,
-                                      );
+                                      controller.showInfo('API密钥已清除');
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.red.shade400,

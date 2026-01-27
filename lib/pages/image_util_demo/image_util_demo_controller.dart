@@ -6,7 +6,9 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 import 'package:wechat_camera_picker/wechat_camera_picker.dart';
 import 'package:photo_manager/photo_manager.dart';
+import '../../base/base_controller.dart';
 import '../../utils/image_util.dart';
+import '../../utils/image_picker_helper.dart';
 
 /// 图片压缩信息
 class ImageCompressInfo {
@@ -22,7 +24,7 @@ class ImageCompressInfo {
 }
 
 /// 图片处理演示控制器
-class ImageUtilDemoController extends GetxController {
+class ImageUtilDemoController extends BaseController {
   // 选中的图片列表
   final selectedImages = <File>[].obs;
   
@@ -54,12 +56,7 @@ class ImageUtilDemoController extends GetxController {
   void onInit() {
     super.onInit();
     pageController = PageController();
-  }
-
-  @override
-  void onClose() {
-    pageController.dispose();
-    super.onClose();
+    registerPageController(pageController);
   }
 
   /// 切换到指定图片
@@ -67,6 +64,15 @@ class ImageUtilDemoController extends GetxController {
     if (index >= 0 && index < selectedImages.length) {
       currentImageIndex.value = index;
       currentImage.value = selectedImages[index];
+      
+      // 同步更新 PageController 的位置
+      if (pageController.hasClients && pageController.page?.round() != index) {
+        pageController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
       
       // 获取当前图片的压缩信息
       final currentFile = selectedImages[index];
@@ -87,31 +93,63 @@ class ImageUtilDemoController extends GetxController {
   /// 切换到下一张图片
   void nextImage() {
     if (currentImageIndex.value < selectedImages.length - 1) {
-      switchToImage(currentImageIndex.value + 1);
+      final nextIndex = currentImageIndex.value + 1;
+      // 直接通过 PageController 切换，onPageChanged 会自动调用 switchToImage
+      if (pageController.hasClients) {
+        pageController.animateToPage(
+          nextIndex,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        switchToImage(nextIndex);
+      }
     }
   }
 
   /// 切换到上一张图片
   void previousImage() {
     if (currentImageIndex.value > 0) {
-      switchToImage(currentImageIndex.value - 1);
+      final prevIndex = currentImageIndex.value - 1;
+      // 直接通过 PageController 切换，onPageChanged 会自动调用 switchToImage
+      if (pageController.hasClients) {
+        pageController.animateToPage(
+          prevIndex,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        switchToImage(prevIndex);
+      }
     }
+  }
+
+  /// 统一处理图片选择后的逻辑
+  Future<void> _handleImageSelected(List<File> files, {String? successMessage}) async {
+    if (files.isEmpty) return;
+    
+    selectedImages.value = files;
+    currentImage.value = files.first;
+    currentImageIndex.value = 0;
+    
+    // 重置 PageController 到第一张
+    if (pageController.hasClients) {
+      pageController.jumpToPage(0);
+    }
+    
+    await _updateFileSize(files.first);
+    
+    // 显示成功提示
+    final message = successMessage ?? 
+        (files.length == 1 ? '已选择图片' : '已选择 ${files.length} 张图片');
+    ImagePickerHelper.showSuccessMessage(message);
   }
 
   /// 从相册选择单张图片
   Future<void> pickFromGallery() async {
     final file = await ImageUtil.pickFromGallery();
     if (file != null) {
-      currentImage.value = file;
-      selectedImages.clear();
-      selectedImages.add(file);
-      currentImageIndex.value = 0;
-      await _updateFileSize(file);
-      Get.snackbar(
-        '成功',
-        '已选择图片',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      await _handleImageSelected([file], successMessage: '已选择图片');
     }
   }
 
@@ -119,16 +157,7 @@ class ImageUtilDemoController extends GetxController {
   Future<void> pickFromCamera() async {
     final file = await ImageUtil.pickFromCamera();
     if (file != null) {
-      currentImage.value = file;
-      selectedImages.clear();
-      selectedImages.add(file);
-      currentImageIndex.value = 0;
-      await _updateFileSize(file);
-      Get.snackbar(
-        '成功',
-        '已拍摄图片',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      await _handleImageSelected([file], successMessage: '已拍摄图片');
     }
   }
 
@@ -136,96 +165,22 @@ class ImageUtilDemoController extends GetxController {
   Future<void> pickMultipleImages() async {
     final files = await ImageUtil.pickMultipleImages(limit: 9);
     if (files.isNotEmpty) {
-      selectedImages.value = files;
-      currentImage.value = files.first;
-      currentImageIndex.value = 0;
-      await _updateFileSize(files.first);
-      Get.snackbar(
-        '成功',
-        '已选择 ${files.length} 张图片',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      await _handleImageSelected(files);
     }
   }
 
   /// 使用微信相册选择器选择图片
   Future<void> pickFromWechatAssets() async {
-    try {
-      // 检查权限状态
-      final PermissionState ps = await PhotoManager.requestPermissionExtend();
-      debugPrint('当前权限状态: $ps');
-      
-      // 如果权限被拒绝，提示用户
-      if (ps == PermissionState.denied) {
-        Get.snackbar(
-          '权限提示', 
-          '需要相册权限才能选择图片，请在设置中开启',
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 3),
-        );
-        return;
-      }
-      
-      // 如果权限受限，也提示用户
-      if (ps == PermissionState.restricted) {
-        Get.snackbar(
-          '权限提示', 
-          '相册权限受限，无法选择图片',
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 3),
-        );
-        return;
-      }
-
-      final List<AssetEntity>? result = await AssetPicker.pickAssets(
-        Get.context!,
-        pickerConfig: AssetPickerConfig(
-          maxAssets: 9,
-          selectedAssets: [],
-          requestType: RequestType.image,
-          specialPickerType: SpecialPickerType.noPreview,
-          textDelegate: const AssetPickerTextDelegate(),
-        ),
-      );
-
-      if (result != null && result.isNotEmpty) {
-        // 转换 AssetEntity 为 File
-        final List<File> files = [];
-        for (final asset in result) {
-          final file = await asset.file;
-          if (file != null) {
-            files.add(file);
-          }
-        }
-
-        if (files.isNotEmpty) {
-          selectedImages.value = files;
-          currentImage.value = files.first;
-          currentImageIndex.value = 0;
-          await _updateFileSize(files.first);
-          Get.snackbar(
-            '成功',
-            '已选择 ${files.length} 张图片',
-            snackPosition: SnackPosition.BOTTOM,
-          );
-        }
-      }
-    } catch (e) {
-      debugPrint('选择图片失败: $e');
-      // 检查是否是权限相关的错误
-      if (e.toString().toLowerCase().contains('permission') ||
-          e.toString().toLowerCase().contains('权限') ||
-          e.toString().toLowerCase().contains('denied') ||
-          e.toString().toLowerCase().contains('拒绝')) {
-        Get.snackbar(
-          '权限错误', 
-          '相册权限被拒绝，请在设置中开启权限',
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 3),
-        );
-      } else {
-        Get.snackbar('错误', '选择图片失败: $e');
-      }
+    final files = await WechatAssetPickerHelper.pickImages(
+      config: const ImagePickerConfig(
+        maxAssets: 9,
+        showPreview: false,
+        requestType: RequestType.image,
+      ),
+    );
+    
+    if (files != null && files.isNotEmpty) {
+      await _handleImageSelected(files);
     }
   }
 
@@ -243,35 +198,16 @@ class ImageUtilDemoController extends GetxController {
       if (result != null) {
         final file = await result.file;
         if (file != null) {
-          currentImage.value = file;
-          selectedImages.clear();
-          selectedImages.add(file);
-          currentImageIndex.value = 0;
-          await _updateFileSize(file);
-          Get.snackbar(
-            '成功',
-            '拍照完成',
-            snackPosition: SnackPosition.BOTTOM,
-          );
+          await _handleImageSelected([file], successMessage: '拍照完成');
         }
       }
     } catch (e) {
       debugPrint('拍照失败: $e');
-      // 检查是否是权限相关的错误
-      if (e.toString().toLowerCase().contains('permission') ||
-          e.toString().toLowerCase().contains('权限') ||
-          e.toString().toLowerCase().contains('denied') ||
-          e.toString().toLowerCase().contains('拒绝') ||
-          e.toString().toLowerCase().contains('camera')) {
-        Get.snackbar(
-          '权限错误', 
-          '相机权限被拒绝，请在设置中开启相机权限',
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 3),
-        );
-      } else {
-        Get.snackbar('错误', '拍照失败: $e');
-      }
+      ImagePickerHelper.handleImagePickerError(
+        e,
+        permissionMessage: '相机权限被拒绝，请在设置中开启相机权限',
+        defaultMessage: '拍照失败: $e',
+      );
     }
   }
 
@@ -289,102 +225,82 @@ class ImageUtilDemoController extends GetxController {
       if (result != null) {
         final file = await result.file;
         if (file != null) {
-          currentImage.value = file;
-          selectedImages.clear();
-          selectedImages.add(file);
-          currentImageIndex.value = 0;
-          await _updateFileSize(file);
-          Get.snackbar(
-            '成功',
-            '视频录制完成',
-            snackPosition: SnackPosition.BOTTOM,
-          );
+          await _handleImageSelected([file], successMessage: '视频录制完成');
         }
       }
     } catch (e) {
       debugPrint('录制视频失败: $e');
-      // 检查是否是权限相关的错误
-      if (e.toString().toLowerCase().contains('permission') ||
-          e.toString().toLowerCase().contains('权限') ||
-          e.toString().toLowerCase().contains('denied') ||
-          e.toString().toLowerCase().contains('拒绝') ||
-          e.toString().toLowerCase().contains('camera')) {
-        Get.snackbar(
-          '权限错误', 
-          '相机权限被拒绝，请在设置中开启相机权限',
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 3),
-        );
-      } else {
-        Get.snackbar('错误', '录制视频失败: $e');
-      }
+      ImagePickerHelper.handleImagePickerError(
+        e,
+        permissionMessage: '相机权限被拒绝，请在设置中开启相机权限',
+        defaultMessage: '录制视频失败: $e',
+      );
     }
   }
 
-  /// 显示图片来源选择对话框
-  Future<void> showSourceDialog() async {
-    final source = await Get.dialog<ImageSource>(
+  /// 显示图片选择对话框（系统选择器）
+  Future<void> showImagePickerDialog() async {
+    final result = await Get.dialog<String>(
       AlertDialog(
-        title: const Text('选择图片来源'),
+        title: const Text('选择图片'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera),
-              title: const Text('相机'),
-              onTap: () => Get.back(result: ImageSource.camera),
+              title: const Text('相机拍照'),
+              onTap: () => Get.back(result: 'camera'),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('相册'),
-              onTap: () => Get.back(result: ImageSource.gallery),
+              title: const Text('从相册选择单张'),
+              onTap: () => Get.back(result: 'gallery_single'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('从相册选择多张'),
+              subtitle: const Text('最多9张'),
+              onTap: () => Get.back(result: 'gallery_multiple'),
             ),
           ],
         ),
       ),
     );
 
-    if (source != null) {
-      if (source == ImageSource.camera) {
-        await pickFromCamera();
-      } else {
-        await pickFromGallery();
+    if (result != null) {
+      switch (result) {
+        case 'camera':
+          await pickFromCamera();
+          break;
+        case 'gallery_single':
+          await pickFromGallery();
+          break;
+        case 'gallery_multiple':
+          await pickMultipleImages();
+          break;
       }
     }
   }
 
-  /// 显示高级图片来源选择对话框
-  Future<void> showAdvancedSourceDialog() async {
+  /// 显示微信选择器对话框
+  Future<void> showWechatPickerDialog() async {
     final result = await Get.dialog<String>(
       AlertDialog(
-        title: const Text('选择图片来源'),
+        title: const Text('微信选择器'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera),
-              title: const Text('系统相机'),
-              subtitle: const Text('使用系统相机拍照'),
-              onTap: () => Get.back(result: 'system_camera'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('系统相册'),
-              subtitle: const Text('使用系统相册选择'),
-              onTap: () => Get.back(result: 'system_gallery'),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('微信相机'),
-              subtitle: const Text('使用微信风格相机'),
-              onTap: () => Get.back(result: 'wechat_camera'),
-            ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
               title: const Text('微信相册'),
               subtitle: const Text('使用微信风格相册选择'),
               onTap: () => Get.back(result: 'wechat_assets'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('微信拍照'),
+              subtitle: const Text('使用微信风格相机'),
+              onTap: () => Get.back(result: 'wechat_camera'),
             ),
             ListTile(
               leading: const Icon(Icons.videocam),
@@ -399,17 +315,11 @@ class ImageUtilDemoController extends GetxController {
 
     if (result != null) {
       switch (result) {
-        case 'system_camera':
-          await pickFromCamera();
-          break;
-        case 'system_gallery':
-          await pickFromGallery();
+        case 'wechat_assets':
+          await pickFromWechatAssets();
           break;
         case 'wechat_camera':
           await takePhotoWithWechatCamera();
-          break;
-        case 'wechat_assets':
-          await pickFromWechatAssets();
           break;
         case 'wechat_video':
           await recordVideoWithWechatCamera();
@@ -421,11 +331,7 @@ class ImageUtilDemoController extends GetxController {
   /// 裁剪图片
   Future<void> cropImage({CropAspectRatio? aspectRatio}) async {
     if (currentImage.value == null) {
-      Get.snackbar(
-        '提示',
-        '请先选择图片',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      showWarning('请先选择图片');
       return;
     }
 
@@ -446,11 +352,7 @@ class ImageUtilDemoController extends GetxController {
         selectedImages.add(croppedFile);
       }
       await _updateFileSize(croppedFile);
-      Get.snackbar(
-        '成功',
-        '图片裁剪完成',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      showSuccess('图片裁剪完成');
     }
   }
 
@@ -483,11 +385,7 @@ class ImageUtilDemoController extends GetxController {
   /// 压缩图片
   Future<void> compressImage({int quality = 85}) async {
     if (currentImage.value == null) {
-      Get.snackbar(
-        '提示',
-        '请先选择图片',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      showWarning('请先选择图片');
       return;
     }
 
@@ -526,23 +424,14 @@ class ImageUtilDemoController extends GetxController {
         isCompressed: true,
       );
       
-      Get.snackbar(
-        '压缩完成',
-        '原始: ${originalSizeStr} → 压缩后: ${compressedSizeStr} (${ratio}%)',
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 3),
-      );
+      showSuccess('压缩完成: 原始: ${originalSizeStr} → 压缩后: ${compressedSizeStr} (${ratio}%)');
     }
   }
 
   /// 压缩到指定大小
   Future<void> compressToSize({int maxSizeKB = 500}) async {
     if (currentImage.value == null) {
-      Get.snackbar(
-        '提示',
-        '请先选择图片',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      showWarning('请先选择图片');
       return;
     }
 
@@ -579,12 +468,7 @@ class ImageUtilDemoController extends GetxController {
         isCompressed: true,
       );
       
-      Get.snackbar(
-        '压缩完成',
-        '原始: ${originalSize.value} → 压缩后: ${compressedSizeStr} (${ratio}%)',
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 3),
-      );
+      showSuccess('压缩完成: 原始: ${originalSize.value} → 压缩后: ${compressedSizeStr} (${ratio}%)');
     }
   }
 
@@ -593,11 +477,7 @@ class ImageUtilDemoController extends GetxController {
   /// 注意：这里是模拟上传，实际使用时请替换为真实的上传地址
   Future<void> uploadImage() async {
     if (currentImage.value == null) {
-      Get.snackbar(
-        '提示',
-        '请先选择图片',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      showWarning('请先选择图片');
       return;
     }
 
@@ -620,17 +500,9 @@ class ImageUtilDemoController extends GetxController {
       //   },
       // );
 
-      Get.snackbar(
-        '成功',
-        '图片上传完成',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      showSuccess('图片上传完成');
     } catch (e) {
-      Get.snackbar(
-        '失败',
-        '上传失败: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      showError('上传失败: $e');
     } finally {
       isUploading.value = false;
       uploadProgress.value = 0.0;
@@ -675,6 +547,11 @@ class ImageUtilDemoController extends GetxController {
       currentImage.value = file;
       selectedImages.clear();
       selectedImages.add(file);
+      currentImageIndex.value = 0;
+      // 重置 PageController 到第一张
+      if (pageController.hasClients) {
+        pageController.jumpToPage(0);
+      }
       await _updateFileSize(file);
 
       // 3. 显示是否上传的确认对话框
@@ -709,6 +586,10 @@ class ImageUtilDemoController extends GetxController {
     originalSize.value = '';
     compressedSize.value = '';
     imageCompressInfo.clear();
+    // 重置 PageController
+    if (pageController.hasClients) {
+      pageController.jumpToPage(0);
+    }
   }
 
   /// 更新文件大小显示

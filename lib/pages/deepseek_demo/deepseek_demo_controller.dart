@@ -1,15 +1,17 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import '../../base/base_controller.dart';
 import '../../network/services/deepseek_service.dart';
 import '../../network/models/deepseek_models.dart';
 import '../../network/config/deepseek_config.dart';
+import '../../network/config/local_deepseek_config.dart';
 
 /// DeepSeek 演示页面控制器
-class DeepSeekDemoController extends GetxController {
+class DeepSeekDemoController extends BaseController {
   // 输入控制器
-  final TextEditingController messageController = TextEditingController();
-  final TextEditingController codeController = TextEditingController();
-  final TextEditingController apiKeyController = TextEditingController();
+  late final TextEditingController messageController;
+  late final TextEditingController codeController;
+  late final TextEditingController apiKeyController;
   
   // 响应式变量
   final RxString chatResponse = ''.obs;
@@ -33,15 +35,13 @@ class DeepSeekDemoController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    messageController = TextEditingController();
+    codeController = TextEditingController();
+    apiKeyController = TextEditingController();
+    registerTextController(messageController);
+    registerTextController(codeController);
+    registerTextController(apiKeyController);
     _checkApiKeyStatus();
-  }
-  
-  @override
-  void onClose() {
-    messageController.dispose();
-    codeController.dispose();
-    apiKeyController.dispose();
-    super.onClose();
   }
   
   /// 检查API密钥状态
@@ -67,13 +67,7 @@ class DeepSeekDemoController extends GetxController {
   /// 设置API密钥
   Future<void> setApiKey() async {
     if (apiKeyController.text.trim().isEmpty) {
-      Get.snackbar(
-        '错误',
-        '请输入API密钥',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
-      );
+      showError('请输入API密钥');
       return;
     }
     
@@ -92,15 +86,7 @@ class DeepSeekDemoController extends GetxController {
         validationMessage.value = '✅ 验证成功！API密钥有效'; // 更新验证消息
         apiKeyController.clear(); // 保存设置时清空输入框
         
-        Get.snackbar(
-          '验证通过',
-          'API密钥有效，已保存并可开始使用',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.green.withOpacity(0.8), 
-          colorText: Colors.white,
-          icon: Icon(Icons.check_circle, color: Colors.white),
-          duration: const Duration(seconds: 3),
-        );
+        showSuccess('API密钥有效，已保存并可开始使用');
       } else {
         // 验证失败，不保存密钥
         DeepSeekConfig.setApiKey(''); // 清除临时设置的密钥
@@ -108,15 +94,7 @@ class DeepSeekDemoController extends GetxController {
         isApiConnected.value = false;
         validationMessage.value = '❌ 验证失败，请检查密钥是否正确'; // 更新验证消息
         
-        Get.snackbar(
-          '验证失败',
-          'API密钥无效，请检查密钥是否正确',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red.withOpacity(0.8),
-          colorText: Colors.white,
-          icon: Icon(Icons.error, color: Colors.white),
-          duration: const Duration(seconds: 4),
-        );
+        showError('API密钥无效，请检查密钥是否正确');
       }
     } catch (e) {
       // 网络异常，不保存密钥
@@ -125,39 +103,19 @@ class DeepSeekDemoController extends GetxController {
       isApiConnected.value = false;
       validationMessage.value = '❌ 网络连接异常，请检查网络后重试'; // 更新验证消息
       
-      Get.snackbar(
-        '验证失败',
-        '网络连接异常，请检查网络后重试',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
-        icon: Icon(Icons.error, color: Colors.white),
-        duration: const Duration(seconds: 4),
-      );
+      showError('网络连接异常，请检查网络后重试');
     }
   }
   
   /// 发送聊天消息
   void sendChatMessage() async {
     if (messageController.text.trim().isEmpty) {
-      Get.snackbar(
-        '错误',
-        '请输入消息内容',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
-      );
+      showWarning('请输入消息内容');
       return;
     }
     
     if (!isApiKeySet.value) {
-      Get.snackbar(
-        '错误',
-        '请先设置API密钥',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
-      );
+      showWarning('请先设置API密钥');
       return;
     }
     
@@ -214,25 +172,13 @@ class DeepSeekDemoController extends GetxController {
         // 只添加错误消息到对话历史，不设置chatResponse
         conversationHistory.add(ChatMessage.assistant('抱歉，出现了错误：$error'));
         chatResponse.value = ''; // 清空临时响应
-        Get.snackbar(
-          '请求失败',
-          error,
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withOpacity(0.8),
-          colorText: Colors.white,
-        );
+        showError(error);
       },
       onException: (exception) {
         // 只添加异常消息到对话历史，不设置chatResponse
         conversationHistory.add(ChatMessage.assistant('抱歉，网络连接异常，请稍后重试。'));
         chatResponse.value = ''; // 清空临时响应
-        Get.snackbar(
-          '网络异常',
-          '请检查网络连接',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withOpacity(0.8),
-          colorText: Colors.white,
-        );
+        showError('请检查网络连接');
       },
     );
     
@@ -242,24 +188,12 @@ class DeepSeekDemoController extends GetxController {
   /// 生成代码
   void generateCode() async {
     if (codeController.text.trim().isEmpty) {
-      Get.snackbar(
-        '错误',
-        '请输入代码需求',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
-      );
+      showWarning('请输入代码需求');
       return;
     }
     
     if (!isApiKeySet.value) {
-      Get.snackbar(
-        '错误',
-        '请先设置API密钥',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
-      );
+      showWarning('请先设置API密钥');
       return;
     }
     
@@ -276,13 +210,7 @@ class DeepSeekDemoController extends GetxController {
       },
       onError: (error, code) {
         codeResponse.value = '错误 ($code): $error';
-        Get.snackbar(
-          '代码生成失败',
-          error,
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withOpacity(0.8),
-          colorText: Colors.white,
-        );
+        showError(error);
       },
       onException: (exception) {
         codeResponse.value = '请求异常: $exception';
@@ -295,24 +223,12 @@ class DeepSeekDemoController extends GetxController {
   /// 解释代码
   void explainCode() async {
     if (codeController.text.trim().isEmpty) {
-      Get.snackbar(
-        '错误',
-        '请输入要解释的代码',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
-      );
+      showWarning('请输入要解释的代码');
       return;
     }
     
     if (!isApiKeySet.value) {
-      Get.snackbar(
-        '错误',
-        '请先设置API密钥',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
-      );
+      showWarning('请先设置API密钥');
       return;
     }
     
@@ -329,13 +245,7 @@ class DeepSeekDemoController extends GetxController {
       },
       onError: (error, code) {
         codeResponse.value = '错误 ($code): $error';
-        Get.snackbar(
-          '代码解释失败',
-          error,
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withOpacity(0.8),
-          colorText: Colors.white,
-        );
+        showError(error);
       },
       onException: (exception) {
         codeResponse.value = '请求异常: $exception';
@@ -364,27 +274,17 @@ class DeepSeekDemoController extends GetxController {
   /// 测试连接
   void testConnection() async {
     if (!isApiKeySet.value) {
-      Get.snackbar(
-        '错误',
-        '请先设置API密钥',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
-      );
+      showWarning('请先设置API密钥');
       return;
     }
     
     final isConnected = await DeepSeekService.checkConnection();
     
-    Get.snackbar(
-      isConnected ? '连接成功' : '连接失败',
-      isConnected ? 'DeepSeek API连接正常' : '无法连接到DeepSeek API',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: isConnected 
-          ? Colors.green.withOpacity(0.8)
-          : Colors.red.withOpacity(0.8),
-      colorText: Colors.white,
-    );
+    if (isConnected) {
+      showSuccess('DeepSeek API连接正常');
+    } else {
+      showError('无法连接到DeepSeek API');
+    }
   }
   
   /// 测试连接并返回结果（用于弹窗）
@@ -407,5 +307,31 @@ class DeepSeekDemoController extends GetxController {
     isApiConnected.value = false;
     validationMessage.value = ''; // 清除验证消息
     apiKeyController.clear();
+  }
+
+  /// 使用默认密钥
+  /// 
+  /// 从本地配置中读取默认密钥并填充到输入框
+  void useDefaultKey() {
+    try {
+      final defaultKey = LocalDeepSeekConfig.defaultApiKey;
+      if (defaultKey.isNotEmpty) {
+        apiKeyController.text = defaultKey;
+        validationMessage.value = '✅ 已填充默认密钥，请点击"测试连接"或"保存设置"';
+      } else {
+        showWarning('未找到默认密钥配置');
+      }
+    } catch (e) {
+      showError('无法加载默认密钥：$e');
+    }
+  }
+
+  /// 检查是否有可用的默认密钥
+  bool get hasDefaultKey {
+    try {
+      return LocalDeepSeekConfig.defaultApiKey.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
   }
 }

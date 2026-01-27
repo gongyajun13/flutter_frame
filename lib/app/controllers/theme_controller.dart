@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../base/base_controller.dart';
 import '../models/theme_model.dart';
 import '../services/theme_service.dart';
 
 /// 主题管理器 - 核心控制器
 /// 提供完整的主题切换功能，包含视觉、交互、个性化三种体验
-class ThemeController extends GetxController {
+class ThemeController extends BaseController {
   // 当前主题模式
   final Rx<ThemeMode> themeMode = ThemeMode.system.obs;
   
@@ -33,7 +34,12 @@ class ThemeController extends GetxController {
   
   @override
   void onClose() {
-    _animationController?.dispose();
+    // AnimationController 会在 BaseController 中自动清理
+    if (_animationController != null) {
+      // 如果已经注册到 BaseController，不需要手动 dispose
+      // 否则手动清理
+      _animationController?.dispose();
+    }
     super.onClose();
   }
   
@@ -90,7 +96,7 @@ class ThemeController extends GetxController {
       }
     } catch (e) {
       debugPrint('切换主题模式失败: $e');
-      Get.snackbar('错误', '主题切换失败，请重试');
+      showError('主题切换失败，请重试');
     } finally {
       isChangingTheme.value = false;
     }
@@ -120,7 +126,7 @@ class ThemeController extends GetxController {
       }
     } catch (e) {
       debugPrint('切换主题失败: $e');
-      Get.snackbar('错误', '主题切换失败，请重试');
+      showError('主题切换失败，请重试');
     } finally {
       isChangingTheme.value = false;
     }
@@ -150,10 +156,10 @@ class ThemeController extends GetxController {
       
       await switchToTheme(customTheme);
       await _themeService.saveCustomTheme(customTheme);
-      Get.snackbar('成功', '自定义主题创建成功');
+      showSuccess('自定义主题创建成功');
     } catch (e) {
       debugPrint('创建自定义主题失败: $e');
-      Get.snackbar('错误', '创建自定义主题失败');
+      showError('创建自定义主题失败');
     }
   }
   
@@ -308,10 +314,10 @@ class ThemeController extends GetxController {
       await _themeService.resetToDefault();
       await switchThemeMode(ThemeMode.system);
       await switchToTheme(AppTheme.light);
-      Get.snackbar('成功', '已重置为默认主题');
+      showSuccess('已重置为默认主题');
     } catch (e) {
       debugPrint('重置为默认主题失败: $e');
-      Get.snackbar('错误', '重置主题失败');
+      showError('重置主题失败');
     }
   }
 }

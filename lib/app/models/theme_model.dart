@@ -37,54 +37,54 @@ class AppTheme {
     this.createdAt,
   });
   
-  /// 浅色主题
+  /// 经典蓝（浅色主题）- 明亮清新的蓝色系
   static const AppTheme light = AppTheme(
-    name: '浅色主题',
+    name: '经典蓝',
     id: 'light',
-    primaryColor: Color(0xFF2196F3),
-    secondaryColor: Color(0xFF03DAC6),
+    primaryColor: Color(0xFF1976D2), // 更鲜明的蓝色
+    secondaryColor: Color(0xFF00ACC1), // 青色作为辅助色
     backgroundColor: Color(0xFFFFFFFF),
-    surfaceColor: Color(0xFFF5F5F5),
-    textColor: Color(0xFF212121),
-    errorColor: Color(0xFFE53935),
-    successColor: Color(0xFF4CAF50),
-    warningColor: Color(0xFFFF9800),
-    infoColor: Color(0xFF2196F3),
+    surfaceColor: Color(0xFFF5F7FA),
+    textColor: Color(0xFF1A1A1A),
+    errorColor: Color(0xFFD32F2F),
+    successColor: Color(0xFF2E7D32),
+    warningColor: Color(0xFFF57C00),
+    infoColor: Color(0xFF0288D1),
     brightness: Brightness.light,
     colorScheme: ColorScheme.light(
-      primary: Color(0xFF2196F3),
-      secondary: Color(0xFF03DAC6),
-      surface: Color(0xFFF5F5F5),
+      primary: Color(0xFF1976D2),
+      secondary: Color(0xFF00ACC1),
+      surface: Color(0xFFF5F7FA),
       background: Color(0xFFFFFFFF),
-      error: Color(0xFFE53935),
+      error: Color(0xFFD32F2F),
       onPrimary: Color(0xFFFFFFFF),
-      onSecondary: Color(0xFF000000),
-      onSurface: Color(0xFF212121),
-      onBackground: Color(0xFF212121),
+      onSecondary: Color(0xFFFFFFFF),
+      onSurface: Color(0xFF1A1A1A),
+      onBackground: Color(0xFF1A1A1A),
       onError: Color(0xFFFFFFFF),
     ),
   );
   
-  /// 深色主题
+  /// 极夜黑（深色主题）- 纯黑背景，亮色强调
   static const AppTheme dark = AppTheme(
-    name: '深色主题',
+    name: '极夜黑',
     id: 'dark',
-    primaryColor: Color(0xFF90CAF9),
-    secondaryColor: Color(0xFF03DAC6),
-    backgroundColor: Color(0xFF121212),
-    surfaceColor: Color(0xFF1E1E1E),
+    primaryColor: Color(0xFF64B5F6), // 亮蓝色
+    secondaryColor: Color(0xFF81C784), // 亮绿色
+    backgroundColor: Color(0xFF000000), // 纯黑
+    surfaceColor: Color(0xFF1A1A1A),
     textColor: Color(0xFFFFFFFF),
-    errorColor: Color(0xFFCF6679),
-    successColor: Color(0xFF81C784),
-    warningColor: Color(0xFFFFB74D),
-    infoColor: Color(0xFF90CAF9),
+    errorColor: Color(0xFFEF5350),
+    successColor: Color(0xFF66BB6A),
+    warningColor: Color(0xFFFFA726),
+    infoColor: Color(0xFF42A5F5),
     brightness: Brightness.dark,
     colorScheme: ColorScheme.dark(
-      primary: Color(0xFF90CAF9),
-      secondary: Color(0xFF03DAC6),
-      surface: Color(0xFF1E1E1E),
-      background: Color(0xFF121212),
-      error: Color(0xFFCF6679),
+      primary: Color(0xFF64B5F6),
+      secondary: Color(0xFF81C784),
+      surface: Color(0xFF1A1A1A),
+      background: Color(0xFF000000),
+      error: Color(0xFFEF5350),
       onPrimary: Color(0xFF000000),
       onSecondary: Color(0xFF000000),
       onSurface: Color(0xFFFFFFFF),
@@ -93,26 +93,54 @@ class AppTheme {
     ),
   );
   
-  /// 商务主题
+  /// 商务蓝（商务主题）- 深蓝色，专业稳重
   static const AppTheme business = AppTheme(
-    name: '商务主题',
+    name: '商务蓝',
     id: 'business',
-    primaryColor: Color(0xFF2E7D32),
-    secondaryColor: Color(0xFF4CAF50),
-    backgroundColor: Color(0xFFFAFAFA),
+    primaryColor: Color(0xFF1565C0), // 深蓝色
+    secondaryColor: Color(0xFF37474F), // 深灰色
+    backgroundColor: Color(0xFFF5F5F5),
+    surfaceColor: Color(0xFFFFFFFF),
+    textColor: Color(0xFF1A237E),
+    errorColor: Color(0xFFC62828),
+    successColor: Color(0xFF2E7D32),
+    warningColor: Color(0xFFE65100),
+    infoColor: Color(0xFF0277BD),
+    brightness: Brightness.light,
+    colorScheme: ColorScheme.light(
+      primary: Color(0xFF1565C0),
+      secondary: Color(0xFF37474F),
+      surface: Color(0xFFFFFFFF),
+      background: Color(0xFFF5F5F5),
+      error: Color(0xFFC62828),
+      onPrimary: Color(0xFFFFFFFF),
+      onSecondary: Color(0xFFFFFFFF),
+      onSurface: Color(0xFF1A237E),
+      onBackground: Color(0xFF1A237E),
+      onError: Color(0xFFFFFFFF),
+    ),
+  );
+  
+  /// 森林绿（清新主题）- 绿色系，自然清新
+  static const AppTheme fresh = AppTheme(
+    name: '森林绿',
+    id: 'fresh',
+    primaryColor: Color(0xFF2E7D32), // 深绿色
+    secondaryColor: Color(0xFF66BB6A), // 亮绿色
+    backgroundColor: Color(0xFFF1F8E9), // 浅绿色背景
     surfaceColor: Color(0xFFFFFFFF),
     textColor: Color(0xFF1B5E20),
-    errorColor: Color(0xFFD32F2F),
+    errorColor: Color(0xFFC62828),
     successColor: Color(0xFF388E3C),
-    warningColor: Color(0xFFF57C00),
-    infoColor: Color(0xFF1976D2),
+    warningColor: Color(0xFFF9A825),
+    infoColor: Color(0xFF0288D1),
     brightness: Brightness.light,
     colorScheme: ColorScheme.light(
       primary: Color(0xFF2E7D32),
-      secondary: Color(0xFF4CAF50),
+      secondary: Color(0xFF66BB6A),
       surface: Color(0xFFFFFFFF),
-      background: Color(0xFFFAFAFA),
-      error: Color(0xFFD32F2F),
+      background: Color(0xFFF1F8E9),
+      error: Color(0xFFC62828),
       onPrimary: Color(0xFFFFFFFF),
       onSecondary: Color(0xFFFFFFFF),
       onSurface: Color(0xFF1B5E20),
@@ -121,81 +149,53 @@ class AppTheme {
     ),
   );
   
-  /// 清新主题
-  static const AppTheme fresh = AppTheme(
-    name: '清新主题',
-    id: 'fresh',
-    primaryColor: Color(0xFF00BCD4),
-    secondaryColor: Color(0xFF4DD0E1),
-    backgroundColor: Color(0xFFF0FDFF),
-    surfaceColor: Color(0xFFFFFFFF),
-    textColor: Color(0xFF006064),
-    errorColor: Color(0xFFE91E63),
+  /// 霓虹紫（科技主题）- 紫色+霓虹色，未来感
+  static const AppTheme tech = AppTheme(
+    name: '霓虹紫',
+    id: 'tech',
+    primaryColor: Color(0xFF9C27B0), // 紫色
+    secondaryColor: Color(0xFFE91E63), // 粉红色
+    backgroundColor: Color(0xFF0A0E27), // 深紫黑
+    surfaceColor: Color(0xFF1A1F3A),
+    textColor: Color(0xFFE1BEE7),
+    errorColor: Color(0xFFFF1744),
     successColor: Color(0xFF00E676),
-    warningColor: Color(0xFFFFC107),
-    infoColor: Color(0xFF00BCD4),
-    brightness: Brightness.light,
-    colorScheme: ColorScheme.light(
-      primary: Color(0xFF00BCD4),
-      secondary: Color(0xFF4DD0E1),
-      surface: Color(0xFFFFFFFF),
-      background: Color(0xFFF0FDFF),
-      error: Color(0xFFE91E63),
+    warningColor: Color(0xFFFFD600),
+    infoColor: Color(0xFF00B0FF),
+    brightness: Brightness.dark,
+    colorScheme: ColorScheme.dark(
+      primary: Color(0xFF9C27B0),
+      secondary: Color(0xFFE91E63),
+      surface: Color(0xFF1A1F3A),
+      background: Color(0xFF0A0E27),
+      error: Color(0xFFFF1744),
       onPrimary: Color(0xFFFFFFFF),
       onSecondary: Color(0xFFFFFFFF),
-      onSurface: Color(0xFF006064),
-      onBackground: Color(0xFF006064),
+      onSurface: Color(0xFFE1BEE7),
+      onBackground: Color(0xFFE1BEE7),
       onError: Color(0xFFFFFFFF),
     ),
   );
   
-  /// 科技主题
-  static const AppTheme tech = AppTheme(
-    name: '科技主题',
-    id: 'tech',
-    primaryColor: Color(0xFF9C27B0),
-    secondaryColor: Color(0xFFE1BEE7),
-    backgroundColor: Color(0xFF0D1117),
-    surfaceColor: Color(0xFF161B22),
-    textColor: Color(0xFFF0F6FC),
-    errorColor: Color(0xFFF85149),
-    successColor: Color(0xFF3FB950),
-    warningColor: Color(0xFFD29922),
-    infoColor: Color(0xFF58A6FF),
-    brightness: Brightness.dark,
-    colorScheme: ColorScheme.dark(
-      primary: Color(0xFF9C27B0),
-      secondary: Color(0xFFE1BEE7),
-      surface: Color(0xFF161B22),
-      background: Color(0xFF0D1117),
-      error: Color(0xFFF85149),
-      onPrimary: Color(0xFFFFFFFF),
-      onSecondary: Color(0xFF000000),
-      onSurface: Color(0xFFF0F6FC),
-      onBackground: Color(0xFFF0F6FC),
-      onError: Color(0xFF000000),
-    ),
-  );
-  
-  /// 暖色主题
+  /// 火焰橙（暖色主题）- 橙红色，温暖活力
   static const AppTheme warm = AppTheme(
-    name: '暖色主题',
+    name: '火焰橙',
     id: 'warm',
-    primaryColor: Color(0xFFFF5722),
-    secondaryColor: Color(0xFFFFAB91),
-    backgroundColor: Color(0xFFFFF8F5),
+    primaryColor: Color(0xFFE65100), // 深橙色
+    secondaryColor: Color(0xFFFF6F00), // 亮橙色
+    backgroundColor: Color(0xFFFFF3E0), // 浅橙色背景
     surfaceColor: Color(0xFFFFFFFF),
     textColor: Color(0xFFBF360C),
     errorColor: Color(0xFFD32F2F),
-    successColor: Color(0xFF4CAF50),
-    warningColor: Color(0xFFFF9800),
-    infoColor: Color(0xFF2196F3),
+    successColor: Color(0xFF558B2F),
+    warningColor: Color(0xFFFF8F00),
+    infoColor: Color(0xFF0277BD),
     brightness: Brightness.light,
     colorScheme: ColorScheme.light(
-      primary: Color(0xFFFF5722),
-      secondary: Color(0xFFFFAB91),
+      primary: Color(0xFFE65100),
+      secondary: Color(0xFFFF6F00),
       surface: Color(0xFFFFFFFF),
-      background: Color(0xFFFFF8F5),
+      background: Color(0xFFFFF3E0),
       error: Color(0xFFD32F2F),
       onPrimary: Color(0xFFFFFFFF),
       onSecondary: Color(0xFFFFFFFF),

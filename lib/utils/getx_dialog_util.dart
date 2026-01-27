@@ -32,9 +32,33 @@ class GetXDialogUtil {
   }
 
   /// 隐藏Loading对话框
+  /// 只关闭 dialog，不影响页面
   static void hideLoading() {
-    if (Get.isDialogOpen == true) {
-      Get.back();
+    // 只使用 Get.back() 关闭 dialog，因为 GetX 的 dialog 是独立的
+    // 使用 Navigator.pop() 可能会关闭页面，所以不使用
+    
+    // 立即尝试关闭
+    _tryCloseDialog();
+    
+    // 延迟重试（处理异步问题）
+    Future.delayed(const Duration(milliseconds: 50), () {
+      _tryCloseDialog();
+    });
+    
+    // 最后一次尝试
+    Future.delayed(const Duration(milliseconds: 150), () {
+      _tryCloseDialog();
+    });
+  }
+  
+  /// 尝试关闭 dialog
+  static void _tryCloseDialog() {
+    try {
+      if (Get.isDialogOpen == true) {
+        Get.back();
+      }
+    } catch (e) {
+      debugPrint('GetXDialogUtil: 关闭 dialog 失败: $e');
     }
   }
 

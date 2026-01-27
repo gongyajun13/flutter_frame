@@ -1,8 +1,9 @@
 import 'package:get/get.dart';
 import '../../app/routes/app_pages.dart';
+import '../../base/base_controller.dart';
 
 /// 首页控制器
-class HomeController extends GetxController {
+class HomeController extends BaseController {
   // 计数器（响应式）
   final counter = 0.obs;
 
@@ -45,22 +46,10 @@ class HomeController extends GetxController {
       description: '各种 URL 跳转场景',
     ),
     DemoItem(
-      title: '全屏 WebView 演示',
-      route: Routes.FULLSCREEN_WEBVIEW_DEMO,
-      icon: '🌍',
-      description: 'WebView 加载和控制',
-    ),
-    DemoItem(
-      title: 'WebView 桥接演示',
-      route: Routes.WEBVIEW_BRIDGE_DEMO,
-      icon: '🌉',
-      description: 'H5 ↔ Flutter 双向通信',
-    ),
-    DemoItem(
-      title: 'WebView MVVM 演示',
-      route: Routes.WEBVIEW_MVVM_DEMO,
-      icon: '🎯',
-      description: 'MVVM 架构的 WebView',
+      title: 'WebView 功能演示',
+      route: Routes.WEBVIEW_DEMO,
+      icon: '🌐',
+      description: 'WebView 浏览、桥接、MVVM 架构等完整功能',
     ),
     DemoItem(
       title: '图片处理工具演示',
@@ -86,25 +75,16 @@ class HomeController extends GetxController {
       icon: '🎨',
       description: '应用主题切换和自定义',
     ),
+    DemoItem(
+      title: '权限请求工具演示',
+      route: Routes.PERMISSION_DEMO,
+      icon: '🔐',
+      description: '各种权限请求和状态检查',
+    ),
   ];
 
-  @override
-  void onInit() {
-    super.onInit();
-    // 初始化逻辑
-  }
-
-  @override
-  void onReady() {
-    super.onReady();
-    // 页面准备完成后的逻辑
-  }
-
-  @override
-  void onClose() {
-    super.onClose();
-    // 清理资源
-  }
+  // 初始化逻辑在基类的 onInit 中处理
+  // 如果需要自定义初始化，可以重写 _onInit 方法
 
   /// 增加计数
   void incrementCounter() {
@@ -118,7 +98,7 @@ class HomeController extends GetxController {
 
   /// 导航到演示页面
   void navigateToDemo(String route) {
-    Get.toNamed(route);
+    navigateTo(route);
   }
 }
 
