@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
+import 'package:device_info_plus/device_info_plus.dart';
 import 'getx_dialog_util.dart';
 import 'url_launcher_util.dart';
 import 'permission_explanation_config.dart';
@@ -31,6 +32,10 @@ import '../widgets/permission_explanation_dialog.dart';
 /// ```
 class PermissionUtil {
   PermissionUtil._();
+
+  /// 记录已经在本次应用生命周期内请求过的权限
+  /// 用于配合 shouldShowRequestRationale 判断「用户已选择不再询问」的场景
+  static final Set<ph.Permission> _requestedPermissions = {};
 
   // ==================== 权限状态检查 ====================
 
@@ -89,7 +94,6 @@ class PermissionUtil {
   }) async {
     // 检查当前权限状态
     final status = await permission.status;
-    debugPrint('PermissionUtil: 权限状态检查 - ${permission.toString()}, 状态: $status, 平台: ${Platform.isIOS ? "iOS" : "Android"}');
 
     // 如果已经授予，直接返回
     if (status.isGranted) {
@@ -103,7 +107,6 @@ class PermissionUtil {
       // iOS 上，如果权限被永久拒绝，直接引导用户到设置页面
       // 因为 iOS 上如果权限被永久拒绝，调用 request() 不会弹出对话框，会直接返回 permanentlyDenied
       if (status.isPermanentlyDenied) {
-        debugPrint('PermissionUtil (iOS): 权限状态检查 - 权限被永久拒绝，直接引导用户到设置（不会弹出系统对话框）');
         if (showDialog) {
           await _showPermissionDeniedDialog(
             permission,
@@ -121,18 +124,12 @@ class PermissionUtil {
       // 重要：在 iOS 上，如果权限之前被拒绝过，再次调用 request() 时，
       // 系统可能会直接返回 permanentlyDenied 而不弹出对话框
       // 这种情况下，需要引导用户到设置页面手动开启权限
-      debugPrint('PermissionUtil (iOS): 当前权限状态: $status (isDenied: ${status.isDenied}, isPermanentlyDenied: ${status.isPermanentlyDenied})');
-      debugPrint('PermissionUtil (iOS): 尝试请求权限（不显示说明弹窗）');
-      
       try {
         final result = await permission.request();
-        debugPrint('PermissionUtil (iOS): 权限请求结果 - $result (isGranted: ${result.isGranted}, isDenied: ${result.isDenied}, isPermanentlyDenied: ${result.isPermanentlyDenied})');
         
         // 如果请求后是永久拒绝，说明系统没有弹出对话框
         // 需要引导用户到设置页面
         if (result.isPermanentlyDenied) {
-          debugPrint('PermissionUtil (iOS): ⚠️ 权限请求后为永久拒绝，系统未弹出对话框，引导用户到设置');
-          debugPrint('PermissionUtil (iOS): 说明：权限之前被拒绝过，系统不再弹出权限请求对话框，需要到设置中手动开启');
           if (showDialog) {
             // 优化提示信息，说明为什么需要到设置中开启
             final customMessage = dialogMessage ?? 
@@ -151,28 +148,28 @@ class PermissionUtil {
         
         // 如果请求后是 denied，说明用户拒绝了权限（系统弹出了对话框，用户选择了拒绝）
         if (result.isDenied) {
-          debugPrint('PermissionUtil (iOS): 用户拒绝了权限（系统已弹出对话框）');
           return false;
         }
         
         // 权限已授予或有限权限
         if (result.isGranted || result == ph.PermissionStatus.limited) {
-          debugPrint('PermissionUtil (iOS): ✅ 权限已授予');
           return true;
         }
-        
-        debugPrint('PermissionUtil (iOS): ⚠️ 未知的权限状态: $result');
         return false;
-      } catch (e) {
-        debugPrint('PermissionUtil (iOS): ❌ 权限请求异常 - $e');
+      } catch (_) {
         return false;
       }
     }
 
     // Android 处理逻辑
-    // 如果被永久拒绝，引导用户到设置页面
+    // 注意：shouldShowRequestRationale 在「第一次请求前」通常也是 false，
+    // 所以不能单独用它来判断永久拒绝。
+    final bool canShowRationale =
+        await permission.shouldShowRequestRationale;
+    final bool hasRequestedBefore = _requestedPermissions.contains(permission);
+
+    // 情况 1：明确的 permanentlyDenied -> 直接引导到设置
     if (status.isPermanentlyDenied) {
-      debugPrint('PermissionUtil (Android): 权限被永久拒绝，引导用户到设置');
       if (showDialog) {
         await _showPermissionDeniedDialog(
           permission,
@@ -183,9 +180,24 @@ class PermissionUtil {
       return false;
     }
 
-    // 显示权限说明并立即拉起系统权限请求（符合应用市场审核要求）
+    // 情况 2：本次生命周期内已经请求过，并且现在为 denied 且 cannotShowRationale，
+    // 说明用户已经选择了「不再询问」或系统不再弹窗，也视为永久拒绝。
+    if (hasRequestedBefore && status.isDenied && !canShowRationale) {
+      if (showDialog) {
+        await _showPermissionDeniedDialog(
+          permission,
+          dialogTitle: dialogTitle,
+          dialogMessage: dialogMessage,
+        );
+      }
+      return false;
+    }
+
+    // 记录本次请求，后续可以用来判断「已经请求过」的场景
+    _requestedPermissions.add(permission);
+
+    // 显示权限说明并立即拉起系统权限请求
     if (showExplanation && context != null && permissionType != null) {
-      debugPrint('PermissionUtil (Android): 显示权限说明弹窗并请求权限');
       final explanation = PermissionExplanationConfig.getExplanationWithCustom(
         permissionType,
         appName: appName,
@@ -196,23 +208,17 @@ class PermissionUtil {
         context,
         explanation: explanation,
         onRequestPermission: () async {
-          // 请求权限
-          debugPrint('PermissionUtil (Android): 开始请求权限');
           final result = await permission.request();
-          debugPrint('PermissionUtil (Android): 权限请求结果 - $result');
           return result.isGranted || result == ph.PermissionStatus.limited;
         },
       );
     }
 
     // 如果不显示说明，直接请求权限
-    debugPrint('PermissionUtil (Android): 直接请求权限，不显示说明弹窗');
     try {
       final result = await permission.request();
-      debugPrint('PermissionUtil (Android): 权限请求结果 - $result');
       return result.isGranted || result == ph.PermissionStatus.limited;
-    } catch (e) {
-      debugPrint('PermissionUtil (Android): 权限请求异常 - $e');
+    } catch (_) {
       return false;
     }
   }
@@ -341,7 +347,9 @@ class PermissionUtil {
   /// 检查相册权限是否已授予
   static Future<bool> isPhotosGranted() async {
     if (Platform.isAndroid) {
-      if (await _getAndroidSdkVersion() >= 33) {
+      final sdkInt = await _getAndroidSdkVersion();
+      // Android 13+ 使用 READ_MEDIA_IMAGES（photos），以下版本使用存储权限
+      if (sdkInt >= 33) {
         return await isGranted(ph.Permission.photos);
       } else {
         return await isGranted(ph.Permission.storage);
@@ -840,25 +848,12 @@ class PermissionUtil {
   /// 注意：这是一个简化实现，实际项目中建议使用 device_info_plus 包获取准确的版本号
   static Future<int> _getAndroidSdkVersion() async {
     if (Platform.isAndroid) {
-      // 使用 device_info_plus 包可以获取准确的版本号
-      // 这里简化处理，通过尝试请求 photos 权限来判断版本
-        // Android 13+ (API 33+) 支持 photos 权限
-        try {
-          final photosStatus = await ph.Permission.photos.status;
-          // 如果 photos 权限状态不是 denied（可能是 granted、limited 等），说明是 Android 13+
-          // 注意：这个方法不够准确，建议使用 device_info_plus 包
-          if (photosStatus != ph.PermissionStatus.denied) {
-            return 33; // Android 13+
-          }
-          // 尝试请求 photos 权限，如果返回的状态不是 denied，说明支持该权限
-          final requestResult = await ph.Permission.photos.request();
-          if (requestResult != ph.PermissionStatus.denied) {
-            return 33; // Android 13+
-          }
-          return 32; // Android 12 及以下
+      try {
+        final info = await DeviceInfoPlugin().androidInfo;
+        return info.version.sdkInt;
       } catch (e) {
-        // 如果出错，默认返回 33（较新版本）
-        // 实际项目中应该使用 device_info_plus 包获取准确版本
+        // 出错时默认按 Android 13 处理，避免旧代码分支逻辑出错
+        debugPrint('PermissionUtil: 获取 Android SDK 版本失败: $e，默认按 33 处理');
         return 33;
       }
     }

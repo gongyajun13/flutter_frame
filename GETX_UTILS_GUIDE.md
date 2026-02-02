@@ -17,8 +17,6 @@ lib/utils/
 
 ### 基础使用
 
-```dart
-import '../utils/getx_utils.dart';
 
 // 成功提示
 GetXSnackBarUtil.success(
@@ -467,9 +465,6 @@ GetXDialogUtil.showCustom(
 
 ## 🚀 集成到现有项目
 
-### 1. 导入工具类
-```dart
-import '../utils/getx_utils.dart';
 ```
 
 ### 2. 替换现有提示

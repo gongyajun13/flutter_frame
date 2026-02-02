@@ -225,15 +225,21 @@ class AppButton extends StatelessWidget {
         Icon(
           icon,
           size: _getIconSize(),
-          color: _getTextColor(),
+          // 风格 C：图标弱化，颜色稍微淡一点
+          color: _getTextColor().withOpacity(0.7),
         ),
       );
       children.add(SizedBox(width: AppDesignTokens.spacing8));
     }
 
+    // 文本不再使用 Flex，避免在不定宽约束下出现布局冲突
     children.add(
       Text(
         text,
+        maxLines: 2,
+        softWrap: true,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: _getFontSize(),
           fontWeight: AppDesignTokens.fontWeightSemiBold,
@@ -242,10 +248,16 @@ class AppButton extends StatelessWidget {
       ),
     );
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: iconBeforeText ? children : children.reversed.toList(),
+    // 使用 FittedBox 让内容在需要时轻微缩放，而不是溢出或被硬裁切；
+    // Row 保持内容在按钮内部水平、垂直居中。
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: iconBeforeText ? children : children.reversed.toList(),
+      ),
     );
   }
 
@@ -289,11 +301,12 @@ class AppButton extends StatelessWidget {
   double _getIconSize() {
     switch (size) {
       case AppButtonSize.small:
-        return AppDesignTokens.iconSizeSmall;
+        // 风格 C：弱化图标，略小于默认尺寸
+        return AppDesignTokens.iconSizeSmall * 0.85;
       case AppButtonSize.medium:
-        return AppDesignTokens.iconSizeMedium;
+        return AppDesignTokens.iconSizeMedium * 0.85;
       case AppButtonSize.large:
-        return AppDesignTokens.iconSizeMedium;
+        return AppDesignTokens.iconSizeMedium * 0.9;
     }
   }
 

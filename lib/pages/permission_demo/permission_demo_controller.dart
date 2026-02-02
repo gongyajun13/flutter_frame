@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:permission_handler/permission_handler.dart' as ph;
 import '../../base/base_controller.dart';
 import '../../utils/permission_util.dart';
 
@@ -81,7 +80,15 @@ class PermissionDemoController extends BaseController {
   void onInit() {
     super.onInit();
     _initPlatformInfo();
+    // 进入页面时初始化各权限的状态（只读 status，不会触发系统权限弹窗）
     _checkAllPermissions();
+  }
+
+  /// 检查所有权限状态（仅读取状态，不会触发系统权限请求）
+  Future<void> _checkAllPermissions() async {
+    for (var item in permissionItems) {
+      await _updatePermissionStatus(item);
+    }
   }
 
   /// 初始化平台信息
@@ -95,110 +102,43 @@ class PermissionDemoController extends BaseController {
     }
   }
 
-  /// 检查所有权限状态
-  Future<void> _checkAllPermissions() async {
-    for (var item in permissionItems) {
-      await _updatePermissionStatus(item);
-    }
-  }
-
   /// 更新权限状态
   Future<void> _updatePermissionStatus(PermissionItem item) async {
     try {
       bool isGranted = false;
-      bool isPermanentlyDenied = false;
 
       switch (item.permissionType) {
         case PermissionType.camera:
           isGranted = await PermissionUtil.isCameraGranted();
-          isPermanentlyDenied = await PermissionUtil.isPermanentlyDenied(
-            ph.Permission.camera,
-          );
           break;
         case PermissionType.photos:
           isGranted = await PermissionUtil.isPhotosGranted();
-          if (Platform.isAndroid) {
-            // Android 需要根据版本判断
-            final androidVersion = await _getAndroidSdkVersion();
-            if (androidVersion >= 33) {
-              isPermanentlyDenied = await PermissionUtil.isPermanentlyDenied(
-                ph.Permission.photos,
-              );
-            } else {
-              isPermanentlyDenied = await PermissionUtil.isPermanentlyDenied(
-                ph.Permission.storage,
-              );
-            }
-          } else {
-            isPermanentlyDenied = await PermissionUtil.isPermanentlyDenied(
-              ph.Permission.photos,
-            );
-          }
           break;
         case PermissionType.location:
           isGranted = await PermissionUtil.isLocationGranted();
-          isPermanentlyDenied = await PermissionUtil.isPermanentlyDenied(
-            ph.Permission.locationWhenInUse,
-          );
           break;
         case PermissionType.notification:
           isGranted = await PermissionUtil.isNotificationGranted();
-          if (Platform.isAndroid) {
-            final androidVersion = await _getAndroidSdkVersion();
-            if (androidVersion >= 33) {
-              isPermanentlyDenied = await PermissionUtil.isPermanentlyDenied(
-                ph.Permission.notification,
-              );
-            }
-          } else {
-            isPermanentlyDenied = await PermissionUtil.isPermanentlyDenied(
-              ph.Permission.notification,
-            );
-          }
           break;
         case PermissionType.microphone:
           isGranted = await PermissionUtil.isMicrophoneGranted();
-          isPermanentlyDenied = await PermissionUtil.isPermanentlyDenied(
-            ph.Permission.microphone,
-          );
           break;
         case PermissionType.contacts:
           isGranted = await PermissionUtil.isContactsGranted();
-          isPermanentlyDenied = await PermissionUtil.isPermanentlyDenied(
-            ph.Permission.contacts,
-          );
           break;
         case PermissionType.calendar:
           isGranted = await PermissionUtil.isCalendarGranted();
-          isPermanentlyDenied = await PermissionUtil.isPermanentlyDenied(
-            ph.Permission.calendar,
-          );
           break;
         case PermissionType.phone:
           isGranted = await PermissionUtil.isPhoneGranted();
-          if (Platform.isAndroid) {
-            isPermanentlyDenied = await PermissionUtil.isPermanentlyDenied(
-              ph.Permission.phone,
-            );
-          }
           break;
         case PermissionType.sms:
           isGranted = await PermissionUtil.isSmsGranted();
-          if (Platform.isAndroid) {
-            isPermanentlyDenied = await PermissionUtil.isPermanentlyDenied(
-              ph.Permission.sms,
-            );
-          }
           break;
       }
 
-      if (isGranted) {
-        item.status.value = '已授予';
-      } else if (isPermanentlyDenied) {
-        item.status.value = '永久拒绝';
-      } else {
-        item.status.value = '已拒绝';
-      }
+      // 列表只关注「是否授予」：已授予 / 未授予
+      item.status.value = isGranted ? '已授予' : '未授予';
     } catch (e) {
       debugPrint('检查权限状态失败: $e');
       item.status.value = '未知';
@@ -287,32 +227,6 @@ class PermissionDemoController extends BaseController {
     }
   }
 
-  /// 检查权限状态
-  Future<void> checkPermissionStatus(PermissionItem item) async {
-    await _updatePermissionStatus(item);
-    
-    showInfo('${item.title}状态：${item.status.value}');
-  }
-
-  /// 获取 Android SDK 版本（简化实现）
-  Future<int> _getAndroidSdkVersion() async {
-    if (Platform.isAndroid) {
-      try {
-        final photosStatus = await ph.Permission.photos.status;
-        if (photosStatus != ph.PermissionStatus.denied) {
-          return 33; // Android 13+
-        }
-        final requestResult = await ph.Permission.photos.request();
-        if (requestResult != ph.PermissionStatus.denied) {
-          return 33; // Android 13+
-        }
-        return 32; // Android 12 及以下
-      } catch (e) {
-        return 33;
-      }
-    }
-    return 0;
-  }
 }
 
 /// 权限项数据模型

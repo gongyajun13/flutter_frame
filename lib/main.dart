@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'app/routes/app_pages.dart';
@@ -40,6 +41,17 @@ class MyApp extends StatelessWidget {
                   ? themeController.currentThemeData
                   : ThemeData.dark(),
               themeMode: themeController.themeMode.value,
+              // 本地化配置
+              locale: const Locale('zh', 'CN'),
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: const [
+                Locale('zh', 'CN'),
+                Locale('en', 'US'),
+              ],
               // GetX 路由配置
               initialRoute: AppPages.INITIAL,
               getPages: AppPages.routes,

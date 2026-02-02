@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../config/deepseek_config.dart';
 import '../models/deepseek_models.dart';
+import '../../utils/app_logger.dart';
 
 /// DeepSeek API服务类
 /// 提供与DeepSeek API交互的功能
@@ -27,35 +29,42 @@ class DeepSeekService {
     );
     
     // 添加请求拦截器
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) {
-        // 确保每次请求都使用最新的API密钥
-        options.headers.addAll(DeepSeekConfig.headers);
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          // 确保每次请求都使用最新的API密钥
+          options.headers.addAll(DeepSeekConfig.headers);
 
-        // 生成curl命令
-        String curl = _generateCurlCommand(options);
-        print('Curl Command:\n$curl');
-        print('=============================\n');
-        
-        handler.next(options);
-      },
-      onResponse: (response, handler) {
-        // 打印详细的响应日志
-        print('\n=== DeepSeek API Response ===');
-        print('Response Data: ${response.data}');
-        print('==============================\n');
-        
-        handler.next(response);
-      },
-      onError: (error, handler) {
-        // 打印详细的错误日志
-        print('\n=== DeepSeek API Error ===');
-        print('Error Response Data: ${error.response?.data}');
-        print('===========================\n');
-        
-        handler.next(error);
-      },
-    ));
+          // 仅在 Debug 环境输出 curl 和请求信息，避免污染生产日志
+          if (kDebugMode) {
+            final curl = _generateCurlCommand(options);
+            AppLogger.d('DeepSeek curl:\n$curl', tag: 'DeepSeek');
+          }
+
+          handler.next(options);
+        },
+        onResponse: (response, handler) {
+          // Debug 环境输出响应数据，Release 可静默或改为简要统计
+          if (kDebugMode) {
+            AppLogger.d('DeepSeek response: ${response.data}', tag: 'DeepSeek');
+          }
+          handler.next(response);
+        },
+        onError: (error, handler) {
+          // 所有环境记录错误，但仅在 Debug 打印详细响应体
+          AppLogger.e(
+            'DeepSeek error: ${error.message}',
+            tag: 'DeepSeek',
+            error: error,
+            stackTrace: error.stackTrace,
+          );
+          if (kDebugMode && error.response?.data != null) {
+            AppLogger.d('DeepSeek error body: ${error.response?.data}', tag: 'DeepSeek');
+          }
+          handler.next(error);
+        },
+      ),
+    );
   }
   
   /// 生成curl命令

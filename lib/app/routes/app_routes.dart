@@ -8,6 +8,7 @@ abstract class Routes {
   static const SIMPLE_NETWORK_DEMO = _Paths.SIMPLE_NETWORK_DEMO;
   static const SCREEN_ADAPTATION_DEMO = _Paths.SCREEN_ADAPTATION_DEMO;
   static const GETX_UTILS_DEMO = _Paths.GETX_UTILS_DEMO;
+  static const SELECTOR_DEMO = _Paths.SELECTOR_DEMO;
   static const CACHED_IMAGE_DEMO = _Paths.CACHED_IMAGE_DEMO;
   static const LOCAL_CACHE_DEMO = _Paths.LOCAL_CACHE_DEMO;
   static const URL_LAUNCHER_DEMO = _Paths.URL_LAUNCHER_DEMO;
@@ -18,6 +19,7 @@ abstract class Routes {
   static const THEME_SELECTOR = _Paths.THEME_SELECTOR;
   static const PERMISSION_DEMO = _Paths.PERMISSION_DEMO;
   static const WEBVIEW_DEMO = _Paths.WEBVIEW_DEMO;
+  static const LIST_DEMO = _Paths.LIST_DEMO;
 }
 
 /// 路由路径
@@ -28,6 +30,7 @@ abstract class _Paths {
   static const SIMPLE_NETWORK_DEMO = '/simple-network-demo';
   static const SCREEN_ADAPTATION_DEMO = '/screen-adaptation-demo';
   static const GETX_UTILS_DEMO = '/getx-utils-demo';
+  static const SELECTOR_DEMO = '/selector-demo';
   static const CACHED_IMAGE_DEMO = '/cached-image-demo';
   static const LOCAL_CACHE_DEMO = '/local-cache-demo';
   static const URL_LAUNCHER_DEMO = '/url-launcher-demo';
@@ -38,5 +41,6 @@ abstract class _Paths {
   static const THEME_SELECTOR = '/theme-selector';
   static const PERMISSION_DEMO = '/permission-demo';
   static const WEBVIEW_DEMO = '/webview-demo';
+  static const LIST_DEMO = '/list-demo';
 }
 

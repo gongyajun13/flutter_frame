@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../base/base_page.dart';
 import '../../theme/app_design_tokens.dart';
-import '../../widgets/app_card.dart';
 import '../../widgets/app_button.dart';
+import '../../widgets/app_card.dart';
 import '../../utils/screen_util_helper.dart';
 import 'screen_adaptation_demo_controller.dart';
 
@@ -238,7 +238,7 @@ class ScreenAdaptationDemoPage extends BaseScrollPage<ScreenAdaptationDemoContro
             ),
           ),
           SizedBox(height: AppDesignTokens.spacingV12),
-          AppButton(
+          AppButton.primary(
             text: '小按钮',
             onPressed: () {},
             isFullWidth: true,
@@ -248,26 +248,26 @@ class ScreenAdaptationDemoPage extends BaseScrollPage<ScreenAdaptationDemoContro
           AppButton(
             text: '中等按钮',
             onPressed: () {},
-            isFullWidth: true,
             type: AppButtonType.primary,
             backgroundColor: AppDesignTokens.successColor,
+            isFullWidth: true,
           ),
           SizedBox(height: AppDesignTokens.spacingV12),
           AppButton(
             text: '大按钮',
             onPressed: () {},
-            isFullWidth: true,
             type: AppButtonType.primary,
             backgroundColor: AppDesignTokens.warningColor,
+            isFullWidth: true,
             size: AppButtonSize.large,
           ),
           SizedBox(height: AppDesignTokens.spacingV12),
           AppButton(
             text: '超大按钮',
             onPressed: () {},
-            isFullWidth: true,
             type: AppButtonType.primary,
             backgroundColor: AppDesignTokens.secondaryColor,
+            isFullWidth: true,
             size: AppButtonSize.large,
           ),
         ],
@@ -430,9 +430,7 @@ class ScreenAdaptationDemoPage extends BaseScrollPage<ScreenAdaptationDemoContro
         ],
       ),
     );
-  }
-
-  /// 构建响应式卡片
+  }  /// 构建响应式卡片
   Widget _buildResponsiveCard(String title, Color color, String content) {
     return Container(
       padding: EdgeInsets.all(AppDesignTokens.spacing16),
@@ -466,12 +464,12 @@ class ScreenAdaptationDemoPage extends BaseScrollPage<ScreenAdaptationDemoContro
   }  /// 构建打印信息按钮
   Widget _buildPrintInfoButton() {
     return AppButton(
-            text: '打印屏幕信息到控制台',
+      text: '打印屏幕信息到控制台',
       onPressed: controller.printScreenInfo,
+      type: AppButtonType.primary,
       icon: Icons.print,
       isFullWidth: true,
-            type: AppButtonType.primary,
-            backgroundColor: AppDesignTokens.infoColor,
+      backgroundColor: AppDesignTokens.infoColor,
     );
   }
 }

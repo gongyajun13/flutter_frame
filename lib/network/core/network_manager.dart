@@ -1,4 +1,5 @@
-import '../../utils/getx_utils.dart';
+import '../../utils/getx_dialog_util.dart';
+import '../../utils/getx_snackbar_util.dart';
 import '../models/api_response.dart';
 import '../services/network_service.dart';
 

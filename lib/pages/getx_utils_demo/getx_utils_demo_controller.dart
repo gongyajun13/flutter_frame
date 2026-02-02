@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../base/base_controller.dart';
-import '../../utils/getx_utils.dart';
 import '../../utils/app_update_util.dart';
 import '../../app/routes/app_pages.dart';
+import '../../utils/getx_dialog_util.dart';
+import '../../utils/getx_snackbar_util.dart';
 
 /// GetX工具演示控制器
 class GetXUtilsDemoController extends BaseController {

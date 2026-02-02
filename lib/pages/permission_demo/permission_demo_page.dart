@@ -195,25 +195,12 @@ class PermissionDemoPage extends BaseScrollPage<PermissionDemoController> {
               ),
             ),
             SizedBox(height: AppDesignTokens.spacingV16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildPrimaryButton(
-                    '请求权限',
-                    item.color,
-                    Icons.lock_open,
-                    () => controller.requestPermission(item),
-                  ),
-                ),
-                SizedBox(width: AppDesignTokens.spacing12),
-                Expanded(
-                  child: _buildSecondaryButton(
-                    '检查状态',
-                    Icons.check_circle_outline,
-                    () => controller.checkPermissionStatus(item),
-                  ),
-                ),
-              ],
+            // 只保留「请求权限」按钮，状态由列表项徽章展示
+            _buildPrimaryButton(
+              '请求权限',
+              item.color,
+              Icons.lock_open,
+              () => controller.requestPermission(item),
             ),
           ],
         ),
@@ -231,13 +218,9 @@ class PermissionDemoPage extends BaseScrollPage<PermissionDemoController> {
         badgeColor = Colors.green;
         icon = Icons.check_circle;
         break;
-      case '已拒绝':
+      case '未授予':
         badgeColor = Colors.red;
         icon = Icons.cancel;
-        break;
-      case '永久拒绝':
-        badgeColor = Colors.orange;
-        icon = Icons.block;
         break;
       default:
         badgeColor = Colors.grey;
@@ -293,18 +276,4 @@ class PermissionDemoPage extends BaseScrollPage<PermissionDemoController> {
     );
   }
 
-  /// 次按钮（检查状态）
-  Widget _buildSecondaryButton(
-    String text,
-    IconData icon,
-    VoidCallback onPressed,
-  ) {
-    return AppButton.outline(
-      text: text,
-      onPressed: onPressed,
-      size: AppButtonSize.medium,
-      isFullWidth: true,
-      icon: icon,
-    );
-  }
 }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../base/base_page.dart';
 import '../../theme/app_design_tokens.dart';
+import '../../utils/getx_snackbar_util.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/app_button.dart';
-import '../../utils/getx_utils.dart';
 import 'getx_utils_demo_controller.dart';
 
 /// GetX工具类演示页面

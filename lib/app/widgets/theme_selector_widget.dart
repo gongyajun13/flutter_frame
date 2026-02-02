@@ -3,51 +3,54 @@ import 'package:get/get.dart';
 import '../controllers/theme_controller.dart';
 import '../models/theme_model.dart';
 import 'live_theme_preview.dart';
+import '../../theme/app_design_tokens.dart';
 
 /// 主题选择器主页面
+///
+/// 说明：
+/// - 整个页面本身不需要频繁根据 ThemeController 重建，内部各区域已经使用 GetBuilder/Obx 监听主题和状态。
+/// - 这里使用普通的 StatelessWidget + 子组件级别的响应式，可以减少整页重复重建，提升渲染性能。
 class ThemeSelectorPage extends StatelessWidget {
   const ThemeSelectorPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<ThemeController>(
-      builder: (controller) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('主题设置'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: () => controller.resetToDefault(),
-                tooltip: '重置为默认主题',
-              ),
-            ],
+    final themeController = Get.find<ThemeController>();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('主题设置'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => themeController.resetToDefault(),
+            tooltip: '重置为默认主题',
           ),
-          body: Stack(
-            children: [
-              const SingleChildScrollView(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ThemeModeSelector(),
-                    SizedBox(height: 24),
-                    PresetThemesSection(),
-                    SizedBox(height: 24),
-                    CustomThemesSection(),
-                    SizedBox(height: 24),
-                    ThemeHistorySection(),
-                    SizedBox(height: 24),
-                    RealTimeThemePreview(),
-                  ],
-                ),
-              ),
-              // 主题切换指示器
-              const ThemeChangeIndicator(),
-            ],
+        ],
+      ),
+      body: Stack(
+        children: const [
+          SingleChildScrollView(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ThemeModeSelector(),
+                SizedBox(height: 24),
+                PresetThemesSection(),
+                SizedBox(height: 24),
+                CustomThemesSection(),
+                SizedBox(height: 24),
+                ThemeHistorySection(),
+                SizedBox(height: 24),
+                RealTimeThemePreview(),
+              ],
+            ),
           ),
-        );
-      },
+          // 主题切换指示器（内部自带 GetBuilder<ThemeController>）
+          ThemeChangeIndicator(),
+        ],
+      ),
     );
   }
 }
@@ -783,40 +786,296 @@ class _CreateCustomThemeDialogState extends State<CreateCustomThemeDialog> {
   }
 
   void _showColorPicker(Color currentColor, ValueChanged<Color> onColorChanged) {
-    final ValueNotifier<Color> selectedColorNotifier = ValueNotifier<Color>(currentColor);
-    
-    showDialog(
+    // 初始化颜色，如果有已选择的颜色则使用，否则使用红色
+    HSVColor hsvColor = HSVColor.fromColor(currentColor);
+
+    showModalBottomSheet<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('选择颜色'),
-        content: SingleChildScrollView(
-          child: ValueListenableBuilder<Color>(
-            valueListenable: selectedColorNotifier,
-            builder: (context, selectedColor, child) {
-              return ColorPicker(
-                pickerColor: selectedColor,
-                onColorChanged: (color) {
-                  selectedColorNotifier.value = color;
-                },
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () {
-              onColorChanged(selectedColorNotifier.value);
-              Navigator.of(context).pop();
-            },
-            child: const Text('确定'),
-          ),
-        ],
-      ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final currentColorValue = hsvColor.toColor();
+
+            return Container(
+              decoration: BoxDecoration(
+                color: AppDesignTokens.surfaceColor,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(AppDesignTokens.radius20),
+                  topRight: Radius.circular(AppDesignTokens.radius20),
+                ),
+              ),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(ctx).viewInsets.bottom,
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppDesignTokens.spacing16,
+                        vertical: AppDesignTokens.spacingV8,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(),
+                            child: Text(
+                              '取消',
+                              style: TextStyle(
+                                color: AppDesignTokens.textSecondary,
+                                fontSize: AppDesignTokens.fontSize14,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '选择颜色',
+                            style: TextStyle(
+                              fontSize: AppDesignTokens.fontSize16,
+                              fontWeight: AppDesignTokens.fontWeightBold,
+                              color: AppDesignTokens.textPrimary,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              onColorChanged(currentColorValue);
+                              Navigator.of(ctx).pop();
+                            },
+                            child: Text(
+                              '确定',
+                              style: TextStyle(
+                                color: AppDesignTokens.primaryColor,
+                                fontSize: AppDesignTokens.fontSize14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // 颜色预览
+                    Container(
+                      margin: EdgeInsets.symmetric(
+                        horizontal: AppDesignTokens.spacing16,
+                        vertical: AppDesignTokens.spacingV8,
+                      ),
+                      padding: EdgeInsets.all(AppDesignTokens.spacing16),
+                      decoration: BoxDecoration(
+                        color: currentColorValue,
+                        borderRadius: BorderRadius.circular(AppDesignTokens.radius8),
+                        border: Border.all(
+                          color: AppDesignTokens.textSecondary.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.palette,
+                            color: _getContrastColor(currentColorValue),
+                            size: 24,
+                          ),
+                          SizedBox(width: AppDesignTokens.spacing8),
+                          Text(
+                            '#${currentColorValue.value.toRadixString(16).substring(2).toUpperCase()}',
+                            style: TextStyle(
+                              fontSize: AppDesignTokens.fontSize18,
+                              fontWeight: AppDesignTokens.fontWeightBold,
+                              color: _getContrastColor(currentColorValue),
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // HSV 色盘
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppDesignTokens.spacing16,
+                      ),
+                      child: Column(
+                        children: [
+                          // 色相和饱和度选择器
+                          Container(
+                            height: 200,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(AppDesignTokens.radius8),
+                              border: Border.all(
+                                color: AppDesignTokens.textSecondary.withOpacity(0.2),
+                                width: 1,
+                              ),
+                            ),
+                            child: GestureDetector(
+                              onPanUpdate: (details) {
+                                final RenderBox? box = context.findRenderObject() as RenderBox?;
+                                if (box == null) return;
+                                final localPosition = box.globalToLocal(details.globalPosition);
+                                final width = box.size.width;
+                                final height = box.size.height;
+
+                                final saturation = (localPosition.dx / width).clamp(0.0, 1.0);
+                                final value = 1.0 - (localPosition.dy / height).clamp(0.0, 1.0);
+
+                                setState(() {
+                                  hsvColor = HSVColor.fromAHSV(
+                                    hsvColor.alpha,
+                                    hsvColor.hue,
+                                    saturation,
+                                    value,
+                                  );
+                                });
+                              },
+                              onTapDown: (details) {
+                                final RenderBox? box = context.findRenderObject() as RenderBox?;
+                                if (box == null) return;
+                                final localPosition = box.globalToLocal(details.localPosition);
+                                final width = box.size.width;
+                                final height = box.size.height;
+
+                                final saturation = (localPosition.dx / width).clamp(0.0, 1.0);
+                                final value = 1.0 - (localPosition.dy / height).clamp(0.0, 1.0);
+
+                                setState(() {
+                                  hsvColor = HSVColor.fromAHSV(
+                                    hsvColor.alpha,
+                                    hsvColor.hue,
+                                    saturation,
+                                    value,
+                                  );
+                                });
+                              },
+                              child: CustomPaint(
+                                painter: _ThemeColorPickerPainter(hsvColor),
+                                child: Stack(
+                                  children: [
+                                    // 选择指示器
+                                    Positioned(
+                                      left: hsvColor.saturation * 200 - 8,
+                                      top: (1.0 - hsvColor.value) * 200 - 8,
+                                      child: Container(
+                                        width: 16,
+                                        height: 16,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 2,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.3),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: AppDesignTokens.spacingV16),
+                          // 色相滑块
+                          Row(
+                            children: [
+                              Text(
+                                '色相',
+                                style: TextStyle(
+                                  fontSize: AppDesignTokens.fontSize14,
+                                  color: AppDesignTokens.textSecondary,
+                                ),
+                              ),
+                              SizedBox(width: AppDesignTokens.spacing8),
+                              Expanded(
+                                child: Slider(
+                                  value: hsvColor.hue,
+                                  min: 0.0,
+                                  max: 360.0,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      hsvColor = HSVColor.fromAHSV(
+                                        hsvColor.alpha,
+                                        value,
+                                        hsvColor.saturation,
+                                        hsvColor.value,
+                                      );
+                                    });
+                                  },
+                                  activeColor: currentColorValue,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: AppDesignTokens.spacingV12),
+                          // 透明度滑块
+                          Row(
+                            children: [
+                              Text(
+                                '透明度',
+                                style: TextStyle(
+                                  fontSize: AppDesignTokens.fontSize14,
+                                  color: AppDesignTokens.textSecondary,
+                                ),
+                              ),
+                              SizedBox(width: AppDesignTokens.spacing8),
+                              Expanded(
+                                child: Slider(
+                                  value: hsvColor.alpha,
+                                  min: 0.0,
+                                  max: 1.0,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      hsvColor = HSVColor.fromAHSV(
+                                        value,
+                                        hsvColor.hue,
+                                        hsvColor.saturation,
+                                        hsvColor.value,
+                                      );
+                                    });
+                                  },
+                                  activeColor: currentColorValue,
+                                ),
+                              ),
+                              SizedBox(width: AppDesignTokens.spacing8),
+                              SizedBox(
+                                width: 40,
+                                child: Text(
+                                  '${(hsvColor.alpha * 100).toInt()}%',
+                                  style: TextStyle(
+                                    fontSize: AppDesignTokens.fontSize14,
+                                    color: AppDesignTokens.textSecondary,
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: AppDesignTokens.spacingV16),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
+  }
+
+  /// 获取对比色（用于在颜色背景上显示文字）
+  Color _getContrastColor(Color color) {
+    // 计算颜色的亮度
+    final luminance = color.computeLuminance();
+    // 如果亮度大于 0.5，返回黑色，否则返回白色
+    return luminance > 0.5 ? Colors.black : Colors.white;
   }
 
   void _createTheme() async {
@@ -834,69 +1093,42 @@ class _CreateCustomThemeDialogState extends State<CreateCustomThemeDialog> {
   }
 }
 
-/// 颜色选择器
-class ColorPicker extends StatelessWidget {
-  final Color pickerColor;
-  final ValueChanged<Color> onColorChanged;
+/// 颜色选择器画布
+class _ThemeColorPickerPainter extends CustomPainter {
+  final HSVColor hsvColor;
 
-  const ColorPicker({
-    super.key,
-    required this.pickerColor,
-    required this.onColorChanged,
-  });
+  _ThemeColorPickerPainter(this.hsvColor);
 
   @override
-  Widget build(BuildContext context) {
-    final colors = [
-      Colors.red,
-      Colors.pink,
-      Colors.purple,
-      Colors.deepPurple,
-      Colors.indigo,
-      Colors.blue,
-      Colors.lightBlue,
-      Colors.cyan,
-      Colors.teal,
-      Colors.green,
-      Colors.lightGreen,
-      Colors.lime,
-      Colors.yellow,
-      Colors.amber,
-      Colors.orange,
-      Colors.deepOrange,
-      Colors.brown,
-      Colors.grey,
-      Colors.blueGrey,
-    ];
-
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: colors.map((color) {
-        final isSelected = color == pickerColor;
-        return GestureDetector(
-          onTap: () => onColorChanged(color),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isSelected ? Colors.black : Colors.grey,
-                width: isSelected ? 3 : 1,
-              ),
-            ),
-            child: isSelected
-                ? const Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 20,
-                  )
-                : null,
-          ),
+  void paint(Canvas canvas, Size size) {
+    // 使用更高效的方法绘制色盘
+    // 按列绘制，减少绘制次数
+    const step = 2.0; // 每2像素绘制一次，提高性能
+    for (double x = 0; x < size.width; x += step) {
+      for (double y = 0; y < size.height; y += step) {
+        final saturation = (x / size.width).clamp(0.0, 1.0);
+        final value = (1.0 - (y / size.height)).clamp(0.0, 1.0);
+        final color = HSVColor.fromAHSV(
+          hsvColor.alpha,
+          hsvColor.hue,
+          saturation,
+          value,
+        ).toColor();
+        final paint = Paint()..color = color;
+        canvas.drawRect(
+          Rect.fromLTWH(x, y, step, step),
+          paint,
         );
-      }).toList(),
-    );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    if (oldDelegate is _ThemeColorPickerPainter) {
+      return oldDelegate.hsvColor.hue != hsvColor.hue ||
+          oldDelegate.hsvColor.alpha != hsvColor.alpha;
+    }
+    return true;
   }
 }

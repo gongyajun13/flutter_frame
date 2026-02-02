@@ -15,6 +15,8 @@ import '../../pages/url_launcher_demo/url_launcher_demo_page.dart';
 import '../../pages/url_launcher_demo/url_launcher_demo_binding.dart';
 import '../../pages/custom_dialog_demo/custom_dialog_demo_page.dart';
 import '../../pages/custom_dialog_demo/custom_dialog_demo_binding.dart';
+import '../../pages/selector_demo/selector_demo_page.dart';
+import '../../pages/selector_demo/selector_demo_binding.dart';
 import '../../pages/image_util_demo/image_util_demo_view.dart';
 import '../../pages/image_util_demo/image_util_demo_binding.dart';
 import '../../pages/video_player_demo/video_player_demo_page.dart';
@@ -25,6 +27,8 @@ import '../../pages/permission_demo/permission_demo_page.dart';
 import '../../pages/permission_demo/permission_demo_binding.dart';
 import '../../pages/webview_demo/webview_demo_page.dart';
 import '../../pages/webview_demo/webview_demo_binding.dart';
+import '../../pages/list_demo/list_demo_page.dart';
+import '../../pages/list_demo/list_demo_binding.dart';
 import '../../app/widgets/theme_selector_widget.dart';
 
 part 'app_routes.dart';
@@ -62,6 +66,13 @@ class AppPages {
       name: _Paths.GETX_UTILS_DEMO,
       page: () => const GetXUtilsDemoPage(),
       binding: GetXUtilsDemoBinding(),
+    ),
+    
+    // 选择器 UI 组件演示
+    GetPage(
+      name: _Paths.SELECTOR_DEMO,
+      page: () => const SelectorDemoPage(),
+      binding: SelectorDemoBinding(),
     ),
     
     // 缓存图片演示
@@ -131,6 +142,13 @@ class AppPages {
       name: _Paths.WEBVIEW_DEMO,
       page: () => const WebViewDemoPage(),
       binding: WebViewDemoBinding(),
+    ),
+
+    // 数据列表演示
+    GetPage(
+      name: _Paths.LIST_DEMO,
+      page: () => const ListDemoPage(),
+      binding: ListDemoBinding(),
     ),
 
   ];

@@ -81,6 +81,20 @@ class HomeController extends BaseController {
       icon: '🔐',
       description: '各种权限请求和状态检查',
     ),
+    // 选择器 UI 组件 Demo
+    DemoItem(
+      title: '选择器 UI 组件',
+      route: Routes.SELECTOR_DEMO,
+      icon: '✅',
+      description: '日期选择、时间选择、文件选择等通用选择器交互示例',
+    ),
+    // 数据列表演示
+    DemoItem(
+      title: '数据列表演示',
+      route: Routes.LIST_DEMO,
+      icon: '📋',
+      description: '线性、网格、瀑布流三种布局样式动态切换',
+    ),
   ];
 
   // 初始化逻辑在基类的 onInit 中处理
