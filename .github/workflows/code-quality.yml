@@ -1,0 +1,51 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # 每天 UTC 时间 2:00 运行（可选）
+    - cron: '0 2 * * *'
+
+jobs:
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.1'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Check code formatting
+        run: dart format --set-exit-if-changed .
+
+      - name: Run linter
+        run: flutter analyze
+
+      - name: Check for unused dependencies
+        run: flutter pub deps
+
+      - name: Check for outdated packages
+        run: flutter pub outdated
+
+      - name: Generate code coverage
+        run: flutter test --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage/lcov.info
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}

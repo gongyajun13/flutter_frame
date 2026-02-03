@@ -11,11 +11,8 @@ void main() async {
   // 确保 Flutter Binding 初始化
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 初始化全局服务
+  // 初始化全局服务（包含主题控制器初始化）
   await InitServices.init();
-  
-  // 初始化主题控制器
-  Get.put(ThemeController());
   
   runApp(const MyApp());
 }

@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # 代码检查和测试
+  analyze-and-test:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.1'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: dart format --set-exit-if-changed .
+
+      - name: Analyze code
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+  # Android 构建检查
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    needs: analyze-and-test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.1'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build Android APK (Debug)
+        run: flutter build apk --debug --dart-define=APP_ENV=dev
+
+      - name: Build Android APK (Release)
+        run: flutter build apk --release --dart-define=APP_ENV=prod
+        env:
+          # 注意：实际使用时，签名密钥应该存储在 GitHub Secrets 中
+          # KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          # KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          # KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/*.apk
+          retention-days: 7
+
+  # iOS 构建检查（仅在 macOS 上运行）
+  build-ios:
+    name: Build iOS
+    runs-on: macos-latest
+    needs: analyze-and-test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.1'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+
+      - name: Build iOS (Debug)
+        run: flutter build ios --debug --no-codesign --dart-define=APP_ENV=dev
+
+      - name: Build iOS (Release)
+        run: flutter build ios --release --no-codesign --dart-define=APP_ENV=prod
+
+      - name: Upload iOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build
+          path: build/ios/iphoneos/*.app
+          retention-days: 7

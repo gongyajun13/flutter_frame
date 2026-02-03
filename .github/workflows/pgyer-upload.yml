@@ -1,0 +1,136 @@
+name: Build and Upload to Pgyer
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Build environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - prod
+        default: 'prod'
+      update_description:
+        description: 'Update description'
+        required: true
+        type: string
+        default: '自动构建发布'
+      password:
+        description: 'Install password (optional)'
+        required: false
+        type: string
+  push:
+    branches:
+      - main
+    paths:
+      - 'lib/**'
+      - 'pubspec.yaml'
+      - 'android/**'
+
+jobs:
+  build-and-upload:
+    name: Build and Upload to Pgyer
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.1'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            ENV="${{ github.event.inputs.environment }}"
+          else
+            ENV="prod"
+          fi
+          echo "environment=${ENV}" >> $GITHUB_OUTPUT
+          echo "Environment: ${ENV}"
+
+      - name: Determine update description
+        id: desc
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            DESC="${{ github.event.inputs.update_description }}"
+          else
+            DESC="自动构建发布 - ${{ github.sha }}"
+          fi
+          echo "description=${DESC}" >> $GITHUB_OUTPUT
+          echo "Description: ${DESC}"
+
+      - name: Build APK
+        run: |
+          BUILD_MODE="release"
+          if [ "${{ steps.env.outputs.environment }}" = "dev" ]; then
+            BUILD_MODE="debug"
+          fi
+          
+          flutter build apk --$BUILD_MODE \
+            --dart-define=APP_ENV=${{ steps.env.outputs.environment }} \
+            --build-name=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//') \
+            --build-number=${{ github.run_number }}
+
+      - name: Upload to Pgyer
+        env:
+          PGYER_API_KEY: ${{ secrets.PGYER_API_KEY }}
+          PGYER_PASSWORD: ${{ github.event.inputs.password }}
+        run: |
+          chmod +x scripts/build-and-upload-pgyer.sh
+          ./scripts/build-and-upload-pgyer.sh \
+            "${{ steps.env.outputs.environment }}" \
+            "${{ steps.desc.outputs.description }}"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-${{ steps.env.outputs.environment }}
+          path: build/app/outputs/flutter-apk/*.apk
+          retention-days: 30
+
+      - name: Upload Pgyer info
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pgyer-info
+          path: build/pgyer-info.txt
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Comment PR with download link
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            try {
+              const info = fs.readFileSync('build/pgyer-info.txt', 'utf8');
+              const downloadLink = info.match(/下载链接: (.*)/)?.[1];
+              if (downloadLink) {
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: `## 📱 蒲公英构建完成\n\n${info}\n\n[点击下载](${downloadLink})`
+                });
+              }
+            } catch (error) {
+              console.log('无法读取蒲公英信息文件');
+            }

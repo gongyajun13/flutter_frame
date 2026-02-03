@@ -1,3 +1,7 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -52,6 +56,24 @@ android {
         }
         debug {
             signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
+    // 配置 APK 输出文件名：Frame-版本号-时间戳
+    applicationVariants.all {
+        val variant = this
+        variant.outputs.all {
+            val versionName = variant.versionName ?: "1.0.0"
+            val buildType = variant.buildType.name
+            val timestamp = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
+            
+            // 文件名格式：Frame-版本号-构建类型-时间戳.apk
+            // 例如：Frame-1.0.0-release-20250202143000.apk
+            val apkName = "Frame-${versionName}-${buildType}-${timestamp}.apk"
+            
+            // 设置输出文件名
+            val outputImpl = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            outputImpl.outputFileName = apkName
         }
     }
 }

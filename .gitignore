@@ -5,11 +5,9 @@
 *.swp
 .DS_Store
 .atom/
-.build/
 .buildlog/
 .history
 .svn/
-.swiftpm/
 migrate_working_dir/
 
 # IntelliJ related
@@ -29,6 +27,7 @@ migrate_working_dir/
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
@@ -44,5 +43,14 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Local configuration files (contain sensitive information)
-lib/network/config/local_deepseek_config.dart
+# 蒲公英配置文件（包含敏感信息）
+.pgyer_config
+
+# 本地配置文件
+local.properties
+*.jks
+*.keystore
+
+# 环境变量文件
+.env
+.env.local

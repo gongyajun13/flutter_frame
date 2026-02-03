@@ -372,3 +372,19 @@ public static final int *;
 
 # Image Picker
 -keep class androidx.lifecycle.** { *; }
+
+# Apache Tika / XML Stream Processing
+# 修复 R8 混淆时缺少 javax.xml.stream 类的问题
+# 这些类在 Android 运行时中不可用，但某些库（如 Apache Tika）可能引用它们
+-dontwarn javax.xml.stream.**
+-dontwarn javax.xml.stream.XMLStreamException
+-dontwarn javax.xml.stream.XMLInputFactory
+-dontwarn javax.xml.stream.XMLOutputFactory
+-dontwarn javax.xml.stream.XMLEventFactory
+-dontwarn javax.xml.stream.XMLStreamReader
+-dontwarn javax.xml.stream.XMLStreamWriter
+-dontwarn javax.xml.stream.XMLEventReader
+-dontwarn javax.xml.stream.XMLEventWriter
+-dontwarn javax.xml.**
+-keep class org.apache.tika.** { *; }
+-dontwarn org.apache.tika.**

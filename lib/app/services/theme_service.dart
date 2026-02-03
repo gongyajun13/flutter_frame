@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/theme_model.dart';
+import '../../utils/local_cache_util.dart';
 
 /// 主题服务 - 负责主题数据的持久化存储和管理
 class ThemeService {
@@ -10,10 +11,19 @@ class ThemeService {
   static const String _customThemesKey = 'custom_themes';
   static const String _themeHistoryKey = 'theme_history';
   
+  /// 获取 SharedPreferences 实例（复用已初始化的实例）
+  Future<SharedPreferences> _getPrefs() async {
+    final prefs = LocalCacheUtil.getInstance();
+    if (prefs != null) {
+      return prefs;
+    }
+    return await SharedPreferences.getInstance();
+  }
+  
   /// 获取当前主题模式
   Future<ThemeMode> getThemeMode() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       final modeIndex = prefs.getInt(_themeModeKey) ?? 0;
       return ThemeMode.values[modeIndex];
     } catch (e) {
@@ -25,7 +35,7 @@ class ThemeService {
   /// 保存主题模式
   Future<void> saveThemeMode(ThemeMode mode) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       await prefs.setInt(_themeModeKey, mode.index);
     } catch (e) {
       debugPrint('保存主题模式失败: $e');
@@ -35,7 +45,7 @@ class ThemeService {
   /// 获取当前主题
   Future<AppTheme> getCurrentTheme() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       final themeJson = prefs.getString(_currentThemeKey);
       
       if (themeJson != null) {
@@ -54,7 +64,7 @@ class ThemeService {
   /// 保存当前主题
   Future<void> saveCurrentTheme(AppTheme theme) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       final themeJson = jsonEncode(theme.toJson());
       await prefs.setString(_currentThemeKey, themeJson);
       
@@ -68,7 +78,7 @@ class ThemeService {
   /// 获取所有自定义主题
   Future<List<AppTheme>> getCustomThemes() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       final themesJson = prefs.getString(_customThemesKey);
       
       if (themesJson != null) {
@@ -98,7 +108,7 @@ class ThemeService {
         customThemes.add(theme);
       }
       
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       final themesJson = jsonEncode(customThemes.map((t) => t.toJson()).toList());
       await prefs.setString(_customThemesKey, themesJson);
     } catch (e) {
@@ -112,7 +122,7 @@ class ThemeService {
       final customThemes = await getCustomThemes();
       customThemes.removeWhere((theme) => theme.id == themeId);
       
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       final themesJson = jsonEncode(customThemes.map((t) => t.toJson()).toList());
       await prefs.setString(_customThemesKey, themesJson);
     } catch (e) {
@@ -123,7 +133,7 @@ class ThemeService {
   /// 获取主题使用历史记录
   Future<List<AppTheme>> getThemeHistory() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       final historyJson = prefs.getString(_themeHistoryKey);
       
       if (historyJson != null) {
@@ -156,7 +166,7 @@ class ThemeService {
         history.removeRange(20, history.length);
       }
       
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       final historyJson = jsonEncode(history.map((t) => t.toJson()).toList());
       await prefs.setString(_themeHistoryKey, historyJson);
     } catch (e) {
@@ -167,7 +177,7 @@ class ThemeService {
   /// 清除所有主题设置
   Future<void> clearAllThemeSettings() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       await prefs.remove(_themeModeKey);
       await prefs.remove(_currentThemeKey);
       await prefs.remove(_customThemesKey);
@@ -209,7 +219,7 @@ class ThemeService {
         return false;
       }
       
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       
       // 导入主题模式
       if (settings['themeMode'] is int) {
@@ -282,7 +292,7 @@ class ThemeService {
   /// 重置为默认主题
   Future<void> resetToDefault() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       await prefs.setInt(_themeModeKey, ThemeMode.system.index);
       
       final defaultThemeJson = jsonEncode(AppTheme.light.toJson());

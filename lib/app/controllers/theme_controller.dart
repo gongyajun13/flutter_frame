@@ -28,7 +28,12 @@ class ThemeController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    _loadThemeFromStorage();
+    // 主题已在 InitServices 中预加载，这里不再需要异步加载
+    // 如果主题未设置（首次启动），使用默认值
+    if (themeMode.value == ThemeMode.system && currentTheme.value == AppTheme.light) {
+      // 尝试从存储加载（作为后备，但通常已在 InitServices 中设置）
+      _loadThemeFromStorage();
+    }
     _setupAnimationController();
   }
   
@@ -48,7 +53,7 @@ class ThemeController extends BaseController {
     // 动画控制器将在需要时创建
   }
   
-  /// 从存储加载主题设置
+  /// 从存储加载主题设置（后备方法，通常不需要）
   Future<void> _loadThemeFromStorage() async {
     try {
       final savedThemeMode = await _themeService.getThemeMode();

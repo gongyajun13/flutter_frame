@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import '../../app/routes/app_pages.dart';
 import '../../base/base_controller.dart';
+import '../../database/app_database.dart';
+import '../../utils/app_logger.dart';
 
 /// 首页控制器
 class HomeController extends BaseController {
@@ -118,8 +120,22 @@ class HomeController extends BaseController {
     ),
   ];
 
-  // 初始化逻辑在基类的 onInit 中处理
-  // 如果需要自定义初始化，可以重写 _onInit 方法
+  @override
+  void onInit() {
+    super.onInit();
+    // 延迟初始化数据库（提升启动速度）
+    _initDatabaseAsync();
+  }
+
+  /// 异步初始化数据库（不阻塞 UI）
+  Future<void> _initDatabaseAsync() async {
+    try {
+      await AppDatabase.instance.database;
+      AppLogger.d('数据库初始化完成', tag: 'Startup');
+    } catch (e, stackTrace) {
+      AppLogger.e('数据库初始化失败', error: e, stackTrace: stackTrace, tag: 'Startup');
+    }
+  }
 
   /// 增加计数
   void incrementCounter() {

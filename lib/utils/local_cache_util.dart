@@ -14,6 +14,16 @@ class LocalCacheUtil {
     _prefs ??= await SharedPreferences.getInstance();
   }
 
+  /// 设置SharedPreferences实例（用于复用已初始化的实例）
+  static void setInstance(SharedPreferences prefs) {
+    _prefs = prefs;
+  }
+
+  /// 获取当前SharedPreferences实例（如果已初始化）
+  static SharedPreferences? getInstance() {
+    return _prefs;
+  }
+
   /// 确保SharedPreferences已初始化
   static Future<SharedPreferences> _ensureInitialized() async {
     if (_prefs == null) {
