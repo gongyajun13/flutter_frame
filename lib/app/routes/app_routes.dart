@@ -20,6 +20,9 @@ abstract class Routes {
   static const PERMISSION_DEMO = _Paths.PERMISSION_DEMO;
   static const WEBVIEW_DEMO = _Paths.WEBVIEW_DEMO;
   static const LIST_DEMO = _Paths.LIST_DEMO;
+  static const DATABASE_DEMO = _Paths.DATABASE_DEMO;
+  static const ERROR_MONITOR_DEMO = _Paths.ERROR_MONITOR_DEMO;
+  static const FILE_DOWNLOAD_DEMO = _Paths.FILE_DOWNLOAD_DEMO;
 }
 
 /// 路由路径
@@ -42,5 +45,8 @@ abstract class _Paths {
   static const PERMISSION_DEMO = '/permission-demo';
   static const WEBVIEW_DEMO = '/webview-demo';
   static const LIST_DEMO = '/list-demo';
+  static const DATABASE_DEMO = '/database-demo';
+  static const ERROR_MONITOR_DEMO = '/error-monitor-demo';
+  static const FILE_DOWNLOAD_DEMO = '/file-download-demo';
 }
 

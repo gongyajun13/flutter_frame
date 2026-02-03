@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
+import '../utils/error_monitor_service.dart';
 
 /// Controller 基类
 /// 提供通用的状态管理、资源清理、错误处理等功能
@@ -166,11 +167,24 @@ abstract class BaseController extends GetxController {
       onSuccess?.call(result);
 
       return result;
-    } catch (e) {
+    } catch (e, stackTrace) {
       // 设置错误消息
       final errorMsg = errorMessage ?? e.toString();
       if (showError) {
         setError(errorMsg);
+      }
+
+      // 上报错误到错误监控系统
+      try {
+        final errorMonitor = Get.find<ErrorMonitorService>();
+        errorMonitor.reportError(
+          e,
+          stackTrace: stackTrace,
+          context: 'BaseController.executeAsync',
+          tags: {'source': 'BaseController.executeAsync'},
+        );
+      } catch (_) {
+        // 错误监控服务可能未初始化，忽略
       }
 
       // 错误回调
@@ -193,8 +207,23 @@ abstract class BaseController extends GetxController {
   }
 
   /// 显示错误提示
-  void showError(String message) {
+  void showError(String message, {Object? error, StackTrace? stackTrace}) {
     Get.snackbar('错误', message);
+    
+    // 上报错误到错误监控系统
+    if (error != null) {
+      try {
+        final errorMonitor = Get.find<ErrorMonitorService>();
+        errorMonitor.reportError(
+          error,
+          stackTrace: stackTrace,
+          context: message,
+          tags: {'source': 'BaseController.showError'},
+        );
+      } catch (e) {
+        // 错误监控服务可能未初始化，忽略
+      }
+    }
   }
 
   /// 显示警告提示

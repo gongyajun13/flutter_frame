@@ -29,6 +29,12 @@ import '../../pages/webview_demo/webview_demo_page.dart';
 import '../../pages/webview_demo/webview_demo_binding.dart';
 import '../../pages/list_demo/list_demo_page.dart';
 import '../../pages/list_demo/list_demo_binding.dart';
+import '../../pages/database_demo/database_demo_page.dart';
+import '../../pages/database_demo/database_demo_binding.dart';
+import '../../pages/error_monitor_demo/error_monitor_demo_page.dart';
+import '../../pages/error_monitor_demo/error_monitor_demo_binding.dart';
+import '../../pages/file_download_demo/file_download_demo_page.dart';
+import '../../pages/file_download_demo/file_download_demo_binding.dart';
 import '../../app/widgets/theme_selector_widget.dart';
 
 part 'app_routes.dart';
@@ -149,6 +155,27 @@ class AppPages {
       name: _Paths.LIST_DEMO,
       page: () => const ListDemoPage(),
       binding: ListDemoBinding(),
+    ),
+
+    // 数据库演示
+    GetPage(
+      name: _Paths.DATABASE_DEMO,
+      page: () => const DatabaseDemoPage(),
+      binding: DatabaseDemoBinding(),
+    ),
+
+    // 错误监控演示
+    GetPage(
+      name: _Paths.ERROR_MONITOR_DEMO,
+      page: () => const ErrorMonitorDemoPage(),
+      binding: ErrorMonitorDemoBinding(),
+    ),
+
+    // 文件下载演示
+    GetPage(
+      name: _Paths.FILE_DOWNLOAD_DEMO,
+      page: () => const FileDownloadDemoPage(),
+      binding: FileDownloadDemoBinding(),
     ),
 
   ];

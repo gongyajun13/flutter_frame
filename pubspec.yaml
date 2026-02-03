@@ -83,6 +83,8 @@ dependencies:
   file_picker: 10.3.7
     # 下拉刷新
   pull_to_refresh: ^2.0.0
+  # 数据库
+  sqflite: ^2.3.0
 
 dev_dependencies:
   flutter_test:

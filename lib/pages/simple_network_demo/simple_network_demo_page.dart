@@ -227,6 +227,15 @@ class SimpleNetworkDemoPage extends BaseScrollPage<SimpleNetworkDemoController> 
             icon: Icons.visibility_off,
             isFullWidth: true,
           ),
+          SizedBox(height: AppDesignTokens.spacingV12),
+          AppButton(
+            text: '上传文件',
+            onPressed: controller.uploadFileDemo,
+            icon: Icons.upload_file,
+            type: AppButtonType.primary,
+            isFullWidth: true,
+            backgroundColor: AppDesignTokens.infoColor,
+          ),
         ],
       ),
     );

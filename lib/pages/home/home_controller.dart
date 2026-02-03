@@ -95,6 +95,27 @@ class HomeController extends BaseController {
       icon: '📋',
       description: '线性、网格、瀑布流三种布局样式动态切换',
     ),
+    // 数据库演示
+    DemoItem(
+      title: '数据库演示',
+      route: Routes.DATABASE_DEMO,
+      icon: '💾',
+      description: 'sqflite 数据库操作、Repository 模式',
+    ),
+    // 错误监控演示
+    DemoItem(
+      title: '错误监控演示',
+      route: Routes.ERROR_MONITOR_DEMO,
+      icon: '🚨',
+      description: '全局错误捕获、错误上报、错误分析',
+    ),
+    // 文件下载演示
+    DemoItem(
+      title: '文件下载演示',
+      route: Routes.FILE_DOWNLOAD_DEMO,
+      icon: '⬇️',
+      description: '文件下载、进度显示、下载管理',
+    ),
   ];
 
   // 初始化逻辑在基类的 onInit 中处理

@@ -2,6 +2,7 @@ import '../core/network_manager.dart';
 import '../models/user_model.dart';
 import '../models/product_model.dart';
 import '../models/api_response.dart';
+import '../config/api_config.dart';
 
 /// API服务类
 /// 提供简洁的业务API调用方法
@@ -134,6 +135,35 @@ class ApiService {
       showError: showError,
       loadingText: '上传头像中...',
       successText: '头像上传成功',
+    );
+  }
+
+  /// 上传文件（通用文件上传）
+  static void uploadFile({
+    required String filePath,
+    String? fileName,
+    Map<String, dynamic>? data,
+    required void Function(Map<String, dynamic>) onSuccess,
+    void Function(String, int)? onError,
+    void Function(dynamic)? onException,
+    void Function(int sent, int total)? onProgress,
+    bool showLoading = true,
+    bool showError = true,
+  }) {
+    _networkManager.upload<Map<String, dynamic>>(
+      url: ApiRoutes.uploadFile,
+      filePath: filePath,
+      fileName: fileName,
+      data: data,
+      fromJson: (resp) => Map<String, dynamic>.from(resp),
+      onSuccess: onSuccess,
+      onError: onError,
+      onException: onException,
+      onProgress: onProgress,
+      showLoading: showLoading,
+      showError: showError,
+      loadingText: '文件上传中...',
+      successText: '文件上传成功',
     );
   }
 

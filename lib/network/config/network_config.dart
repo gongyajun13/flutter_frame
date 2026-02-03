@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
+import '../../app/config/environment_config.dart';
 import 'api_config.dart';
 import '../interceptors/auth_interceptor.dart';
 import '../interceptors/log_interceptor.dart' as custom;
@@ -49,15 +51,25 @@ class NetworkConfig {
     // 认证拦截器
     _dio!.interceptors.add(AuthInterceptor());
 
-    // 日志拦截器（仅在调试模式下启用）
-    if (kDebugMode) {
-      _dio!.interceptors.add(custom.LogInterceptor(
-        requestHeader: true,
-        requestBody: true,
-        responseHeader: false,
-        responseBody: true,
-        error: true,
-      ));
+    // 日志拦截器：优先按环境配置控制，其次回退到 kDebugMode
+    bool enableLog = kDebugMode;
+    try {
+      final env = Get.find<EnvironmentConfig>();
+      enableLog = env.enableNetworkLog;
+    } catch (_) {
+      // 如果 EnvironmentConfig 还没初始化，保持 kDebugMode 行为
+    }
+
+    if (enableLog) {
+      _dio!.interceptors.add(
+        custom.LogInterceptor(
+          requestHeader: true,
+          requestBody: true,
+          responseHeader: false,
+          responseBody: true,
+          error: true,
+        ),
+      );
     }
 
     // 重试拦截器

@@ -1,25 +1,12 @@
 /// API配置类
 /// 管理所有API的基础配置和路由
 class ApiConfig {
-  // 基础URL配置
-  static const String _baseUrl = 'https://api.example.com';
-  static const String _devBaseUrl = 'https://dev-api.example.com';
-  static const String _testBaseUrl = 'https://test-api.example.com';
+  // 基础URL配置（对 EnvironmentConfig 暴露）
+  static const String baseUrl = 'https://api.example.com';
+  static const String devBaseUrl = 'https://dev-api.example.com';
+  static const String testBaseUrl = 'https://test-api.example.com';
 
-  // 当前环境
-  static const Environment _currentEnvironment = Environment.production;
-
-  /// 获取当前环境的基础URL
-  static String get baseUrl {
-    switch (_currentEnvironment) {
-      case Environment.development:
-        return _devBaseUrl;
-      case Environment.test:
-        return _testBaseUrl;
-      case Environment.production:
-        return _baseUrl;
-    }
-  }
+  /// 默认基础URL（不考虑环境，供 EnvironmentConfig 使用）
 
   // 请求超时配置
   static const int connectTimeout = 30000; // 30秒

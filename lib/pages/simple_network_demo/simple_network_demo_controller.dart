@@ -1,11 +1,18 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
+
 import '../../network/services/api_service.dart';
 import '../../network/models/user_model.dart';
 import '../../network/models/product_model.dart';
+import '../../network/models/api_response.dart';
+import '../../network/repositories/product_api_repository.dart';
 import '../../base/base_controller.dart';
 
 /// 简化网络请求演示控制器
 class SimpleNetworkDemoController extends BaseController {
+  /// 产品接口仓库（基于 BaseRepository + NetworkService）
+  final ProductApiRepository _productRepository = ProductApiRepository();
+
   // 结果显示文本
   final result = '点击按钮测试简洁的网络请求'.obs;
 
@@ -60,63 +67,127 @@ class SimpleNetworkDemoController extends BaseController {
   }
 
   /// 获取产品列表
-  void getProducts() {
-    result.value = '正在获取产品列表...';
+  Future<void> getProducts() async {
+    result.value = '正在获取产品列表（Repository 模式）...';
 
-    ApiService.getProducts(
-      page: 1,
-      pageSize: 5,
-      filters: {
-        'category': 'electronics',
-        'isActive': true,
-      },
-      onSuccess: (data) {
-        products.value = data.items;
+    await executeAsync(
+      action: () async {
+        final page = await _productRepository.fetchProducts(
+          page: 1,
+          pageSize: 5,
+          filters: {
+            'category': 'electronics',
+            'isActive': true,
+          },
+        );
+        products.value = page.items;
         result.value = '获取产品列表成功!\n\n'
-            '总数: ${data.total}\n'
-            '当前页: ${data.page}\n'
-            '每页大小: ${data.pageSize}\n'
-            '是否有更多: ${data.hasMore}\n\n'
-            '产品列表:\n${data.items.map((p) => p.toString()).join('\n')}';
-        showSuccess('获取产品列表成功');
+            '总数: ${page.total}\n'
+            '当前页: ${page.page}\n'
+            '每页大小: ${page.pageSize}\n'
+            '是否有更多: ${page.hasMore}\n\n'
+            '产品列表:\n${page.items.map((p) => p.toString()).join('\n')}';
       },
-      onError: (message, code) {
-        result.value = '获取产品列表失败!\n\n错误信息: $message\n错误代码: $code';
-        showError('获取产品列表失败: $message');
-      },
-      onException: (error) {
-        result.value = '获取产品列表异常!\n\n异常信息: $error';
-        showError('获取产品列表异常: $error');
+      showLoading: true,
+      showError: true,
+      errorMessage: '获取产品列表失败',
+      onError: (e) {
+        if (e is NetworkError) {
+          result.value = '获取产品列表失败!\n\n错误信息: ${e.message}\n错误代码: ${e.statusCode ?? 0}';
+          showError('获取产品列表失败: ${e.message}', error: e);
+        } else {
+          result.value = '获取产品列表异常!\n\n异常信息: $e';
+          showError('获取产品列表异常: $e', error: e);
+        }
       },
     );
   }
 
   /// 创建产品
-  void createProduct() {
-    result.value = '正在创建产品...';
+  Future<void> createProduct() async {
+    result.value = '正在创建产品（Repository 模式）...';
 
-    ApiService.createProduct(
-      productData: CreateProductRequestModel(
-        name: '测试产品 ${DateTime.now().millisecondsSinceEpoch}',
-        description: '这是一个测试产品',
-        price: 99.99,
-        category: 'electronics',
-        stock: 100,
-      ),
-      onSuccess: (data) {
-        result.value = '创建产品成功!\n\n产品信息:\n${data.toString()}';
-        showSuccess('创建产品成功');
+    final req = CreateProductRequestModel(
+      name: '测试产品 ${DateTime.now().millisecondsSinceEpoch}',
+      description: '这是一个测试产品',
+      price: 99.99,
+      category: 'electronics',
+      stock: 100,
+    );
+
+    await executeAsync(
+      action: () async {
+        final product = await _productRepository.createProduct(req);
+        result.value = '创建产品成功!\n\n产品信息:\n${product.toString()}';
       },
-      onError: (message, code) {
-        result.value = '创建产品失败!\n\n错误信息: $message\n错误代码: $code';
-        showError('创建产品失败: $message');
-      },
-      onException: (error) {
-        result.value = '创建产品异常!\n\n异常信息: $error';
-        showError('创建产品异常: $error');
+      showLoading: true,
+      showError: true,
+      errorMessage: '创建产品失败',
+      onError: (e) {
+        if (e is NetworkError) {
+          result.value = '创建产品失败!\n\n错误信息: ${e.message}\n错误代码: ${e.statusCode ?? 0}';
+          showError('创建产品失败: ${e.message}', error: e);
+        } else {
+          result.value = '创建产品异常!\n\n异常信息: $e';
+          showError('创建产品异常: $e', error: e);
+        }
       },
     );
   }
+
+  /// 文件上传演示
+  Future<void> uploadFileDemo() async {
+    try {
+      result.value = '请选择要上传的文件...';
+
+      final picked = await FilePicker.platform.pickFiles(
+        allowMultiple: false,
+      );
+
+      if (picked == null || picked.files.isEmpty || picked.files.first.path == null) {
+        result.value = '已取消选择文件';
+        return;
+      }
+
+      final file = picked.files.first;
+      final filePath = file.path!;
+      final fileName = file.name;
+
+      result.value = '正在上传文件...\n\n文件名: $fileName\n路径: $filePath';
+
+      ApiService.uploadFile(
+        filePath: filePath,
+        fileName: fileName,
+        data: {
+          'description': '网络请求演示上传文件',
+        },
+        onSuccess: (data) {
+          result.value = '文件上传成功!\n\n服务器返回:\n${data.toString()}';
+          showSuccess('文件上传成功');
+        },
+        onError: (message, code) {
+          result.value = '文件上传失败!\n\n错误信息: $message\n错误代码: $code';
+          showError('文件上传失败: $message');
+        },
+        onException: (error) {
+          result.value = '文件上传异常!\n\n异常信息: $error';
+          showError('文件上传异常: $error');
+        },
+        onProgress: (sent, total) {
+          if (total > 0) {
+            final percent = (sent / total * 100).toStringAsFixed(1);
+            result.value = '正在上传文件...\n\n文件名: $fileName\n进度: $percent%';
+          }
+        },
+        showLoading: true,
+        showError: true,
+      );
+    } catch (e, stackTrace) {
+      result.value = '文件上传异常!\n\n异常信息: $e';
+      showError('文件上传异常: $e', error: e, stackTrace: stackTrace);
+    }
+  }
+
 
   /// 静默请求（不显示loading和错误提示）
   void silentRequest() {
