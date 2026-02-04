@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
 import '../../network/config/api_config.dart';
 import '../../network/config/network_config.dart';
+import '../../utils/local_cache_util.dart';
 
 /// 应用运行环境
 enum AppEnvironment {
@@ -16,17 +18,23 @@ class EnvironmentConfig extends GetxService {
   /// 当前环境（默认 production，可通过 --dart-define APP_ENV=dev 覆盖）
   final Rx<AppEnvironment> env = AppEnvironment.production.obs;
 
-  /// 当前 API 基础地址
-  late final String apiBaseUrl;
+  /// 当前 API 基础地址（启动时初始化，可在调试模式下运行时切换）
+  late String apiBaseUrl;
 
   /// 是否启用网络日志（Dio 日志拦截器）
-  late final bool enableNetworkLog;
+  late bool enableNetworkLog;
 
   /// 是否在控制台输出错误日志
-  late final bool enableConsoleLog;
+  late bool enableConsoleLog;
 
   /// 是否启用错误上报（Sentry / Crashlytics 等）
-  late final bool enableErrorReporting;
+  late bool enableErrorReporting;
+
+  /// 当前网络代理地址（例如 127.0.0.1:8888），仅用于调试
+  String? proxy;
+
+  /// 是否启用网络代理
+  bool enableProxy = false;
 
   /// 是否为开发环境
   bool get isDev => env.value == AppEnvironment.development;
@@ -39,10 +47,83 @@ class EnvironmentConfig extends GetxService {
 
   /// 初始化环境配置
   Future<EnvironmentConfig> init() async {
-    // 从编译参数中读取环境变量（可通过 --dart-define APP_ENV=dev 传入）
-    const envString = String.fromEnvironment('APP_ENV', defaultValue: 'prod');
+    // 1. 先看本地是否有用户手动选择的环境（调试面板设置）
+    final savedEnv = await LocalCacheUtil.getString('app_env_override');
 
-    switch (envString.toLowerCase()) {
+    // 2. 没有保存的覆盖值时，再根据构建参数 / kDebugMode 推断
+    String envString;
+    if (savedEnv != null && savedEnv.isNotEmpty) {
+      envString = savedEnv;
+    } else {
+      const rawEnvString = String.fromEnvironment('APP_ENV', defaultValue: '');
+      envString = rawEnvString.isEmpty
+          ? (kDebugMode ? 'dev' : 'prod')
+          : rawEnvString;
+    }
+
+    _applyEnv(envString.toLowerCase());
+
+    // 初始化 Dio
+    final _ = NetworkConfig.dio;
+
+    // 3. 读取并应用网络代理配置
+    final savedProxy = await LocalCacheUtil.getString('net_proxy');
+    final savedProxyEnabled =
+        await LocalCacheUtil.getBool('net_proxy_enabled') ?? false;
+
+    proxy = savedProxy;
+    enableProxy = savedProxyEnabled && (savedProxy?.isNotEmpty ?? false);
+
+    if (enableProxy && proxy != null && proxy!.isNotEmpty) {
+      NetworkConfig.setProxy(proxy!);
+    } else {
+      NetworkConfig.clearProxy();
+    }
+
+    // 更新 Dio 的 baseUrl
+    NetworkConfig.updateBaseUrl(apiBaseUrl);
+
+    return this;
+  }
+
+  /// 运行时切换环境（用于调试面板）
+  void setRuntimeEnvironment(AppEnvironment target) {
+    switch (target) {
+      case AppEnvironment.development:
+        _applyEnv('dev');
+        LocalCacheUtil.setString('app_env_override', 'dev');
+        break;
+      case AppEnvironment.test:
+        _applyEnv('test');
+        LocalCacheUtil.setString('app_env_override', 'test');
+        break;
+      case AppEnvironment.production:
+        _applyEnv('prod');
+        LocalCacheUtil.setString('app_env_override', 'prod');
+        break;
+    }
+    // 更新 Dio 的 baseUrl
+    NetworkConfig.updateBaseUrl(apiBaseUrl);
+  }
+
+  /// 设置 / 关闭网络代理
+  Future<void> setProxyConfig(String? proxyAddress, {required bool enabled}) async {
+    proxy = proxyAddress;
+    enableProxy = enabled && proxyAddress != null && proxyAddress.isNotEmpty;
+
+    if (enableProxy && proxy != null && proxy!.isNotEmpty) {
+      NetworkConfig.setProxy(proxy!);
+      await LocalCacheUtil.setString('net_proxy', proxy!);
+      await LocalCacheUtil.setBool('net_proxy_enabled', true);
+    } else {
+      NetworkConfig.clearProxy();
+      await LocalCacheUtil.setString('net_proxy', '');
+      await LocalCacheUtil.setBool('net_proxy_enabled', false);
+    }
+  }
+
+  void _applyEnv(String envString) {
+    switch (envString) {
       case 'dev':
       case 'development':
         env.value = AppEnvironment.development;
@@ -68,11 +149,6 @@ class EnvironmentConfig extends GetxService {
         enableErrorReporting = true;
         break;
     }
-
-    // 更新 Dio 的 baseUrl
-    NetworkConfig.updateBaseUrl(apiBaseUrl);
-
-    return this;
   }
 }
 

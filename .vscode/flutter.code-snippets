@@ -1,0 +1,153 @@
+{
+  "GetX Controller": {
+    "prefix": "gxcontroller",
+    "body": [
+      "import 'package:get/get.dart';",
+      "import '../../base/base_controller.dart';",
+      "",
+      "class ${1:Name}Controller extends BaseController {",
+      "  @override",
+      "  void onInit() {",
+      "    super.onInit();",
+      "    $2",
+      "  }",
+      "",
+      "  @override",
+      "  void onReady() {",
+      "    super.onReady();",
+      "  }",
+      "",
+      "  @override",
+      "  void onClose() {",
+      "    super.onClose();",
+      "  }",
+      "}"
+    ],
+    "description": "GetX BaseController template"
+  },
+  "GetX Page": {
+    "prefix": "gxpage",
+    "body": [
+      "import 'package:flutter/material.dart';",
+      "import 'package:get/get.dart';",
+      "import '../../base/base_page.dart';",
+      "import '${1:name}_controller.dart';",
+      "",
+      "class ${1:Name}Page extends BasePage<${1:Name}Controller> {",
+      "  const ${1:Name}Page({super.key});",
+      "",
+      "  @override",
+      "  Widget build(BuildContext context) {",
+      "    return Scaffold(",
+      "      appBar: AppBar(",
+      "        title: const Text('${1:Name}'),",
+      "      ),",
+      "      body: Obx(() {",
+      "        return $2",
+      "      }),",
+      "    );",
+      "  }",
+      "}"
+    ],
+    "description": "GetX BasePage template"
+  },
+  "GetX Binding": {
+    "prefix": "gxbinding",
+    "body": [
+      "import 'package:get/get.dart';",
+      "import '${1:name}_controller.dart';",
+      "",
+      "class ${1:Name}Binding extends Bindings {",
+      "  @override",
+      "  void dependencies() {",
+      "    Get.lazyPut(() => ${1:Name}Controller());",
+      "  }",
+      "}"
+    ],
+    "description": "GetX Binding template"
+  },
+  "Network Request": {
+    "prefix": "networkreq",
+    "body": [
+      "try {",
+      "  final response = await NetworkManager.instance.dio.${1|get,post,put,delete|}(",
+      "    '${2:/api/endpoint}',",
+      "    ${3:data: {}},",
+      "  );",
+      "  ",
+      "  if (response.statusCode == 200) {",
+      "    // TODO: 处理成功响应",
+      "    return response.data;",
+      "  }",
+      "} catch (e) {",
+      "  AppLogger.e('请求失败', error: e);",
+      "  rethrow;",
+      "}"
+    ],
+    "description": "Network request template"
+  },
+  "Local Cache": {
+    "prefix": "localcache",
+    "body": [
+      "// 保存",
+      "await LocalCacheUtil.setString('${1:key}', '${2:value}');",
+      "",
+      "// 读取",
+      "final value = await LocalCacheUtil.getString('${1:key}');"
+    ],
+    "description": "Local cache template"
+  },
+  "GetX Obx": {
+    "prefix": "obx",
+    "body": [
+      "Obx(() {",
+      "  return $1;",
+      "})"
+    ],
+    "description": "GetX Obx reactive widget"
+  },
+  "GetX GetBuilder": {
+    "prefix": "getbuilder",
+    "body": [
+      "GetBuilder<${1:Controller}>(",
+      "  builder: (controller) {",
+      "    return $2;",
+      "  },",
+      ")"
+    ],
+    "description": "GetX GetBuilder widget"
+  },
+  "AppButton": {
+    "prefix": "appbutton",
+    "body": [
+      "AppButton(",
+      "  text: '${1:按钮文本}',",
+      "  onPressed: () {",
+      "    $2",
+      "  },",
+      ")"
+    ],
+    "description": "AppButton widget"
+  },
+  "AppCard": {
+    "prefix": "appcard",
+    "body": [
+      "AppCard(",
+      "  child: $1,",
+      ")"
+    ],
+    "description": "AppCard widget"
+  },
+  "Try Catch": {
+    "prefix": "trycatch",
+    "body": [
+      "try {",
+      "  $1",
+      "} catch (e) {",
+      "  AppLogger.e('错误', error: e);",
+      "  $2",
+      "}"
+    ],
+    "description": "Try catch with logging"
+  }
+}

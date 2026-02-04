@@ -1,4 +1,19 @@
 import 'package:dio/dio.dart';
+import '../../../utils/network_logger.dart';
+
+class _RequestSnapshot {
+  final DateTime startTime;
+  final Map<String, dynamic> headers;
+  final dynamic data;
+  final Map<String, dynamic> queryParameters;
+
+  const _RequestSnapshot({
+    required this.startTime,
+    required this.headers,
+    required this.data,
+    required this.queryParameters,
+  });
+}
 
 /// 日志拦截器
 /// 负责记录网络请求和响应的详细信息
@@ -21,8 +36,20 @@ class LogInterceptor extends Interceptor {
     this.maxWidth = 90,
   });
 
+  // 存储请求快照（用于耗时计算 + 生成 curl）
+  final Map<String, _RequestSnapshot> _requestSnapshots = {};
+
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    final requestKey = '${options.method}_${options.uri}';
+    final startTime = DateTime.now();
+    _requestSnapshots[requestKey] = _RequestSnapshot(
+      startTime: startTime,
+      headers: Map<String, dynamic>.from(options.headers),
+      data: options.data,
+      queryParameters: Map<String, dynamic>.from(options.queryParameters),
+    );
+
     if (requestHeader) {
       _printRequestHeader(options);
     }
@@ -34,6 +61,23 @@ class LogInterceptor extends Interceptor {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
+    // 记录响应到 NetworkLogger
+    // 始终记录，不依赖 kDebugMode，因为 NetworkLogger 本身会控制是否启用
+    final requestKey = '${response.requestOptions.method}_${response.requestOptions.uri}';
+    final snapshot = _requestSnapshots.remove(requestKey);
+    
+    NetworkLogger.instance.recordResponse(
+      method: response.requestOptions.method,
+      url: response.requestOptions.uri.toString(),
+      statusCode: response.statusCode ?? 0,
+      statusMessage: response.statusMessage,
+      responseData: responseBody ? response.data : null,
+      requestTime: snapshot?.startTime,
+      headers: snapshot?.headers,
+      requestData: snapshot?.data,
+      queryParameters: snapshot?.queryParameters,
+    );
+
     if (responseHeader) {
       _printResponseHeader(response);
     }
@@ -45,6 +89,22 @@ class LogInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
+    // 记录错误到 NetworkLogger
+    // 始终记录，不依赖 kDebugMode，因为 NetworkLogger 本身会控制是否启用
+    final requestKey = '${err.requestOptions.method}_${err.requestOptions.uri}';
+    final snapshot = _requestSnapshots.remove(requestKey);
+    
+    NetworkLogger.instance.recordError(
+      method: err.requestOptions.method,
+      url: err.requestOptions.uri.toString(),
+      error: err.message,
+      statusCode: err.response?.statusCode,
+      requestTime: snapshot?.startTime,
+      headers: snapshot?.headers,
+      requestData: snapshot?.data,
+      queryParameters: snapshot?.queryParameters,
+    );
+
     if (error) {
       _printError(err);
     }

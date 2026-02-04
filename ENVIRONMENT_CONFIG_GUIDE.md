@@ -167,6 +167,11 @@ class ApiConfig {
 
 > 当前 `NetworkConfig` 中已经在 `kDebugMode` 下添加日志拦截器，后续可以根据 `EnvironmentConfig.enableNetworkLog` 再细化控制。
 
+补充（重要）：
+- 如果你**没有传** `--dart-define APP_ENV=...`，现在的默认行为是：
+  - **Debug 模式**：默认按 `dev` 初始化（开启 `enableNetworkLog/enableConsoleLog`）
+  - **非 Debug 模式**：默认按 `prod` 初始化（关闭控制台与网络日志）
+
 ## 🧩 下一步可扩展点
 
 1. **Feature Flag（功能开关）**

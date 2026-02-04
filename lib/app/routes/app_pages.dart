@@ -178,6 +178,7 @@ class AppPages {
       binding: FileDownloadDemoBinding(),
     ),
 
+
   ];
 }
 

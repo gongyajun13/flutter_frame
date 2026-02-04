@@ -5,6 +5,7 @@ import 'storage_service.dart';
 import '../config/environment_config.dart';
 import '../../utils/error_monitor_service.dart';
 import '../../utils/local_cache_util.dart';
+import '../../utils/performance_monitor.dart';
 import '../controllers/theme_controller.dart';
 import '../services/theme_service.dart';
 
@@ -39,6 +40,11 @@ class InitServices {
     final themeController = Get.put(ThemeController());
     themeController.themeMode.value = themeMode;
     themeController.currentTheme.value = currentTheme;
+
+    // 7. 初始化性能监控（开发/测试环境默认启用；也可在面板内开关控制）
+    if (envConfig.enableConsoleLog) {
+      PerformanceMonitor.instance.start();
+    }
     
     // 注意：数据库初始化已延迟到首页加载后，以提升启动速度
     // 数据库初始化将在 HomeController.onInit() 中异步执行

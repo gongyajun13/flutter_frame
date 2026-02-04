@@ -314,6 +314,119 @@ export PGYER_API_KEY=your_api_key
    flutter build ipa --release
    ```
 
+### 5. `generate_page.sh` - 页面生成工具
+
+快速生成 GetX MVVM 页面结构（Controller、Page、Binding），**支持多种 BasePage 类型**，并**自动配置路由**。
+
+**用法**:
+```bash
+./scripts/generate_page.sh <page_name> [route_path] [page_type]
+```
+
+**参数说明**:
+- `page_name`: 页面名称（支持下划线和连字符，如 `user_profile` 或 `user-profile`）
+- `route_path`: 路由路径（可选，默认为 `/page_name`）
+- `page_type`: 页面类型（可选，默认为 `base`）
+
+**页面类型**:
+- `base` (默认) - `BasePage`，需要实现 `buildContent` 方法
+- `scroll` - `BaseScrollPage`，需要实现 `buildScrollContent` 方法（带滚动视图）
+- `list` - `BaseListPage`，需要实现 `buildListItem` 和 `items` getter（列表页面）
+- `refresh` - `BaseRefreshPage`，需要实现 `buildRefreshContent` 方法（支持下拉刷新和上拉加载）
+
+**示例**:
+```bash
+# 生成基础页面（默认）
+./scripts/generate_page.sh user_profile /user-profile
+
+# 生成滚动页面
+./scripts/generate_page.sh product_detail /product-detail scroll
+
+# 生成列表页面
+./scripts/generate_page.sh order_list /order-list list
+
+# 生成刷新页面（支持下拉刷新和上拉加载）
+./scripts/generate_page.sh news_list /news-list refresh
+```
+
+**功能**:
+- ✅ 自动创建 Controller、Page、Binding 三个文件
+- ✅ 根据页面类型生成对应的代码结构
+- ✅ **自动配置路由**（添加到 `app_routes.dart` 和 `app_pages.dart`）
+- ✅ 自动添加 import 语句
+- ✅ 生成符合项目规范的代码
+
+**输出**:
+- `lib/pages/{page_name}/{page_name}_controller.dart`
+- `lib/pages/{page_name}/{page_name}_page.dart`
+- `lib/pages/{page_name}/{page_name}_binding.dart`
+
+**注意事项**:
+- `refresh` 类型的页面，Controller 会自动继承 `BaseRefreshController`，需要实现 `loadData()` 和 `loadMoreData()` 方法
+- `list` 类型的页面，需要指定数据模型类型（在生成的代码中修改 `dynamic` 为实际类型）
+- 如果路由已存在，脚本会跳过添加，避免重复
+
+### 6. `switch-env.sh` - 环境切换工具
+
+快速切换开发/测试/生产环境。
+
+**用法**:
+```bash
+./scripts/switch-env.sh [dev|test|prod]
+```
+
+**示例**:
+```bash
+# 切换到开发环境
+./scripts/switch-env.sh dev
+
+# 切换到生产环境
+./scripts/switch-env.sh prod
+```
+
+**功能**:
+- 更新环境配置文件
+- 创建环境标记文件
+- 显示运行命令提示
+
+### 7. `run-tests.sh` - 测试运行工具
+
+运行单元测试或集成测试。
+
+**用法**:
+```bash
+./scripts/run-tests.sh [unit|integration|all]
+```
+
+**示例**:
+```bash
+# 运行所有测试
+./scripts/run-tests.sh all
+
+# 只运行单元测试
+./scripts/run-tests.sh unit
+```
+
+## VS Code 代码片段
+
+项目已配置 VS Code 代码片段，在编辑器中输入以下前缀即可快速生成代码：
+
+- `gxcontroller` - GetX Controller 模板
+- `gxpage` - GetX Page 模板
+- `gxbinding` - GetX Binding 模板
+- `networkreq` - 网络请求模板
+- `localcache` - 本地缓存模板
+- `obx` - GetX Obx 响应式组件
+- `appbutton` - AppButton 组件
+- `appcard` - AppCard 组件
+- `trycatch` - Try-Catch 错误处理模板
+
+**使用方法**:
+1. 在 VS Code 中打开 Dart 文件
+2. 输入代码片段前缀（如 `gxcontroller`）
+3. 按 `Tab` 键自动补全
+4. 使用 `Tab` 键在占位符之间跳转
+
 ## 相关文档
 
 - [CI/CD 配置指南](../CI_CD_GUIDE.md)

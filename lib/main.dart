@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -6,6 +7,8 @@ import 'app/routes/app_pages.dart';
 import 'app/services/init_services.dart';
 import 'app/controllers/theme_controller.dart';
 import 'app/widgets/live_theme_preview.dart';
+import 'widgets/debug_panel/debug_panel_controller.dart';
+import 'widgets/debug_panel/debug_ball.dart';
 
 void main() async {
   // 确保 Flutter Binding 初始化
@@ -13,6 +16,11 @@ void main() async {
   
   // 初始化全局服务（包含主题控制器初始化）
   await InitServices.init();
+  
+  // 初始化调试面板控制器（仅在 debug 模式）
+  if (kDebugMode) {
+    Get.put(DebugPanelController());
+  }
   
   runApp(const MyApp());
 }
@@ -57,6 +65,19 @@ class MyApp extends StatelessWidget {
               // 路由观察器（用于调试）
               routingCallback: (routing) {
                 debugPrint('Route: ${routing?.current}');
+              },
+              // 在 builder 中通过 Overlay 添加全局调试入口（悬浮球）
+              builder: (context, child) {
+                Widget app = child ?? const SizedBox.shrink();
+
+                if (kDebugMode) {
+                  // 在首帧之后，将 DebugBall 以 OverlayEntry 形式插入到全局 Overlay 中
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    DebugBallOverlay.ensureAttached();
+                  });
+                }
+
+                return app;
               },
             ),
           );

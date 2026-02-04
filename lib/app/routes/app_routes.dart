@@ -23,6 +23,7 @@ abstract class Routes {
   static const DATABASE_DEMO = _Paths.DATABASE_DEMO;
   static const ERROR_MONITOR_DEMO = _Paths.ERROR_MONITOR_DEMO;
   static const FILE_DOWNLOAD_DEMO = _Paths.FILE_DOWNLOAD_DEMO;
+  static const PRODUCT_DETAIL = _Paths.PRODUCT_DETAIL;
 }
 
 /// 路由路径
@@ -48,5 +49,6 @@ abstract class _Paths {
   static const DATABASE_DEMO = '/database-demo';
   static const ERROR_MONITOR_DEMO = '/error-monitor-demo';
   static const FILE_DOWNLOAD_DEMO = '/file-download-demo';
+  static const PRODUCT_DETAIL = '/product-detail';
 }
 

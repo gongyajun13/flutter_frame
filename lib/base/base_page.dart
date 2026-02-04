@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/widgets.dart' show WidgetsBinding;
 import '../theme/app_design_tokens.dart';
 import '../app/controllers/theme_controller.dart';
 import 'base_controller.dart';
+import '../utils/performance_monitor.dart';
 
 /// 页面基类
 /// 提供通用的页面布局、错误处理、加载状态显示等功能
@@ -52,22 +54,28 @@ abstract class BasePage<T extends BaseController> extends GetView<T> {
 
   /// 构建页面主体
   Widget _buildBody(BuildContext context) {
-    return Obx(() {
-      final controller = this.controller;
+    final pageName = pageTitle ?? Get.currentRoute;
+    return _PageOpenPerfWrapper(
+      pageName: pageName,
+      childBuilder: (ctx) {
+        return Obx(() {
+          final controller = this.controller;
 
-      // 显示错误状态
-      if (controller.hasError) {
-        return _buildErrorWidget(context, controller.errorMessage.value!);
-      }
+          // 显示错误状态
+          if (controller.hasError) {
+            return _buildErrorWidget(ctx, controller.errorMessage.value!);
+          }
 
-      // 显示加载状态
-      if (controller.isLoading.value) {
-        return _buildLoadingWidget(context);
-      }
+          // 显示加载状态
+          if (controller.isLoading.value) {
+            return _buildLoadingWidget(ctx);
+          }
 
-      // 显示正常内容
-      return buildContent(context);
-    });
+          // 显示正常内容
+          return buildContent(ctx);
+        });
+      },
+    );
   }
 
   /// 构建加载状态 Widget
@@ -133,6 +141,46 @@ abstract class BasePage<T extends BaseController> extends GetView<T> {
         ),
       ),
     );
+  }
+}
+
+/// 页面首帧耗时统计包装组件
+class _PageOpenPerfWrapper extends StatefulWidget {
+  final String pageName;
+  final WidgetBuilder childBuilder;
+
+  const _PageOpenPerfWrapper({
+    required this.pageName,
+    required this.childBuilder,
+  });
+
+  @override
+  State<_PageOpenPerfWrapper> createState() => _PageOpenPerfWrapperState();
+}
+
+class _PageOpenPerfWrapperState extends State<_PageOpenPerfWrapper> {
+  late final DateTime _startTime;
+  bool _reported = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTime = DateTime.now();
+    // 新页面会话开始：后续 FPS/Jank 统计将代表该页面
+    PerformanceMonitor.instance.startPageSession(widget.pageName);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_reported) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_reported) return;
+        _reported = true;
+        final duration = DateTime.now().difference(_startTime);
+        PerformanceMonitor.instance.recordPageOpen(widget.pageName, duration);
+      });
+    }
+    return widget.childBuilder(context);
   }
 }
 

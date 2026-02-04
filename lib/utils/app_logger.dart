@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'debug_logger.dart';
 
 /// 全局日志工具
 ///
@@ -13,18 +14,36 @@ class AppLogger {
   static void d(String message, {String tag = _defaultTag}) {
     if (kDebugMode) {
       debugPrint('[$tag][D] $message');
+      // 收集到调试日志
+      DebugLogger.instance.addLog(
+        level: 'D',
+        tag: tag,
+        message: message,
+      );
     }
   }
 
   static void i(String message, {String tag = _defaultTag}) {
     if (kDebugMode) {
       debugPrint('[$tag][I] $message');
+      // 收集到调试日志
+      DebugLogger.instance.addLog(
+        level: 'I',
+        tag: tag,
+        message: message,
+      );
     }
   }
 
   static void w(String message, {String tag = _defaultTag}) {
     if (kDebugMode) {
       debugPrint('[$tag][W] $message');
+      // 收集到调试日志
+      DebugLogger.instance.addLog(
+        level: 'W',
+        tag: tag,
+        message: message,
+      );
     }
   }
 
@@ -44,6 +63,15 @@ class AppLogger {
       buffer.write('\n$stackTrace');
     }
     debugPrint(buffer.toString());
+    
+    // 收集到调试日志（错误日志在所有环境都收集）
+    DebugLogger.instance.addLog(
+      level: 'E',
+      tag: tag,
+      message: message,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 }
 
