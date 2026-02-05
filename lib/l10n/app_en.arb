@@ -1,0 +1,30 @@
+{
+  "@@locale": "en",
+  "appTitle": "Flutter Frame",
+  "welcome": "Welcome",
+  "hello": "Hello, {name}",
+  "@hello": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirm": "Confirm",
+  "cancel": "Cancel",
+  "ok": "OK",
+  "save": "Save",
+  "delete": "Delete",
+  "edit": "Edit",
+  "loading": "Loading...",
+  "noData": "No Data",
+  "networkError": "Network error, please check your connection",
+  "operationSuccess": "Operation successful",
+  "operationFailed": "Operation failed",
+  "pleaseRetry": "Please retry",
+  "language": "Language",
+  "chinese": "Chinese",
+  "english": "English",
+  "theme": "Theme",
+  "settings": "Settings"
+}

@@ -22,7 +22,7 @@ class CachedImageDemoController extends BaseController {
 
   /// 显示图片信息
   void showImageInfo(String title, String url) {
-    GetXSnackBarUtil.info(
+    SnackBarUtil.info(
       message: '$title\nURL: $url',
       title: '图片信息',
     );

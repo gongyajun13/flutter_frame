@@ -297,21 +297,21 @@ class NetworkManager {
 
   /// 显示loading
   void _showLoading(String text) {
-    GetXDialogUtil.showLoading(message: text);
+    DialogUtil.showLoading(message: text);
   }
 
   /// 隐藏loading
   void _hideLoading() {
-    GetXDialogUtil.hideLoading();
+    DialogUtil.hideLoading();
   }
 
   /// 显示成功提示
   void _showSuccess(String message) {
-    GetXSnackBarUtil.success(message: message);
+    SnackBarUtil.success(message: message);
   }
 
   /// 显示错误提示
   void _showError(String message) {
-    GetXSnackBarUtil.error(message: message);
+    SnackBarUtil.error(message: message);
   }
 }

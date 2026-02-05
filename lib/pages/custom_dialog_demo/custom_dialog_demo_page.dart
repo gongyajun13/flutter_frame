@@ -164,7 +164,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 简单自定义对话框
   void _showSimpleCustomDialog() {
-    GetXDialogUtil.showCustom(
+    DialogUtil.showCustom(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -198,7 +198,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 带标题的自定义对话框
   void _showCustomWithTitleDialog() {
-    GetXDialogUtil.showCustomWithTitle(
+    DialogUtil.showCustomWithTitle(
       title: '系统提示',
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -233,7 +233,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 带按钮的自定义对话框
   void _showCustomWithButtonsDialog() {
-    GetXDialogUtil.showCustomWithButtons(
+    DialogUtil.showCustomWithButtons(
       title: '确认操作',
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -264,11 +264,11 @@ class CustomDialogDemoPage extends StatelessWidget {
         ],
       ),
       buttons: [
-        GetXDialogUtil.buildCancelButton(
+        DialogUtil.buildCancelButton(
           text: '取消',
           onPressed: () => print('取消操作'),
         ),
-        GetXDialogUtil.buildConfirmButton(
+        DialogUtil.buildConfirmButton(
           text: '确定',
           onPressed: () => print('确认操作'),
         ),
@@ -278,7 +278,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 全屏自定义对话框
   void _showFullScreenDialog() {
-    GetXDialogUtil.showCustomFullScreen(
+    DialogUtil.showCustomFullScreen(
       title: '全屏对话框',
       child: Container(
         color: Colors.blue.shade50,
@@ -320,7 +320,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 带图标的对话框
   void _showIconDialog() {
-    GetXDialogUtil.showCustomWithTitle(
+    DialogUtil.showCustomWithTitle(
       title: '成功',
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -365,7 +365,7 @@ class CustomDialogDemoPage extends StatelessWidget {
     final TextEditingController nameController = TextEditingController();
     final TextEditingController emailController = TextEditingController();
     
-    GetXDialogUtil.showCustomWithButtons(
+    DialogUtil.showCustomWithButtons(
       title: '用户信息',
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -392,11 +392,11 @@ class CustomDialogDemoPage extends StatelessWidget {
         ],
       ),
       buttons: [
-        GetXDialogUtil.buildCancelButton(
+        DialogUtil.buildCancelButton(
           text: '取消',
           onPressed: () => print('取消表单'),
         ),
-        GetXDialogUtil.buildConfirmButton(
+        DialogUtil.buildConfirmButton(
           text: '保存',
           onPressed: () {
             print('保存用户信息: ${nameController.text}, ${emailController.text}');
@@ -416,7 +416,7 @@ class CustomDialogDemoPage extends StatelessWidget {
       '选项 5',
     ];
     
-    GetXDialogUtil.showCustomWithTitle(
+    DialogUtil.showCustomWithTitle(
       title: '选择选项',
       child: Container(
         height: 200.h,
@@ -439,7 +439,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 图片预览对话框
   void _showImagePreviewDialog() {
-    GetXDialogUtil.showCustom(
+    DialogUtil.showCustom(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -479,7 +479,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 渐变背景对话框
   void _showGradientDialog() {
-    GetXDialogUtil.showCustom(
+    DialogUtil.showCustom(
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -525,7 +525,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 毛玻璃效果对话框
   void _showBlurDialog() {
-    GetXDialogUtil.showCustom(
+    DialogUtil.showCustom(
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.1),
@@ -571,7 +571,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 动画效果对话框
   void _showAnimatedDialog() {
-    GetXDialogUtil.showCustom(
+    DialogUtil.showCustom(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -615,7 +615,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 自定义关闭按钮
   void _showCustomCloseDialog() {
-    GetXDialogUtil.showCustom(
+    DialogUtil.showCustom(
       title: '自定义关闭',
       showCloseButton: false,
       child: Column(
@@ -647,12 +647,12 @@ class CustomDialogDemoPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              GetXDialogUtil.buildSecondaryButton(
+              DialogUtil.buildSecondaryButton(
                 text: '稍后再说',
                 onPressed: () => print('稍后再说'),
                 icon: Icons.schedule,
               ),
-              GetXDialogUtil.buildPrimaryButton(
+              DialogUtil.buildPrimaryButton(
                 text: '立即设置',
                 onPressed: () => print('立即设置'),
                 icon: Icons.settings,

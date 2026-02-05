@@ -12,9 +12,9 @@ enum SnackBarType {
 
 /// 全局SnackBar工具类
 /// 基于GetX实现，支持队列管理和多种样式
-class GetXSnackBarUtil {
+class SnackBarUtil {
   // 私有构造函数，防止实例化
-  GetXSnackBarUtil._();
+  SnackBarUtil._();
 
   // SnackBar队列管理
   static final List<SnackBarConfig> _snackBarQueue = [];

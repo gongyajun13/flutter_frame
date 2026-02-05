@@ -35,6 +35,8 @@ import '../../pages/error_monitor_demo/error_monitor_demo_page.dart';
 import '../../pages/error_monitor_demo/error_monitor_demo_binding.dart';
 import '../../pages/file_download_demo/file_download_demo_page.dart';
 import '../../pages/file_download_demo/file_download_demo_binding.dart';
+import '../../pages/i18n_demo/i18n_demo_page.dart';
+import '../../pages/i18n_demo/i18n_demo_binding.dart';
 import '../../app/widgets/theme_selector_widget.dart';
 
 part 'app_routes.dart';
@@ -178,6 +180,12 @@ class AppPages {
       binding: FileDownloadDemoBinding(),
     ),
 
+    // 国际化演示
+    GetPage(
+      name: _Paths.I18N_DEMO,
+      page: () => const I18nDemoPage(),
+      binding: I18nDemoBinding(),
+    ),
 
   ];
 }

@@ -12,9 +12,9 @@ enum DialogType {
 
 /// 全局Dialog工具类
 /// 基于GetX实现，支持Loading、确认弹窗、自定义视图等
-class GetXDialogUtil {
+class DialogUtil {
   // 私有构造函数，防止实例化
-  GetXDialogUtil._();
+  DialogUtil._();
 
 
   /// 显示Loading对话框
@@ -58,7 +58,7 @@ class GetXDialogUtil {
         Get.back();
       }
     } catch (e) {
-      debugPrint('GetXDialogUtil: 关闭 dialog 失败: $e');
+      debugPrint('DialogUtil: 关闭 dialog 失败: $e');
     }
   }
 
@@ -944,26 +944,15 @@ class GetXDialogUtil {
           ],
         ),
         child: Padding(
-          padding: EdgeInsets.all(20.w),
+          padding: EdgeInsets.symmetric(
+            horizontal: 20.w,
+            vertical: 20.h,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 图标 - 优化尺寸
-              Container(
-                width: 56.w,
-                height: 56.w,
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(28.r),
-                ),
-                child: Icon(
-                  Icons.help_outline,
-                  size: 28.sp,
-                  color: Colors.orange.shade600,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              // 标题 - 优化字体大小
+              // 标题
               Text(
                 title,
                 style: TextStyle(
@@ -971,12 +960,12 @@ class GetXDialogUtil {
                   fontWeight: FontWeight.bold,
                   color: Colors.grey.shade800,
                 ),
-                textAlign: TextAlign.center,
+                textAlign: TextAlign.left,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               SizedBox(height: 10.h),
-              // 内容 - 优化字体大小和行高
+              // 内容
               Text(
                 message,
                 style: TextStyle(
@@ -984,12 +973,12 @@ class GetXDialogUtil {
                   color: Colors.grey.shade600,
                   height: 1.4,
                 ),
-                textAlign: TextAlign.center,
+                textAlign: TextAlign.left,
                 maxLines: 4,
                 overflow: TextOverflow.ellipsis,
               ),
               SizedBox(height: 24.h),
-              // 按钮 - 优化高度
+              // 按钮
               Row(
                 children: [
                   Expanded(
@@ -1056,26 +1045,15 @@ class GetXDialogUtil {
           ],
         ),
         child: Padding(
-          padding: EdgeInsets.all(20.w),
+          padding: EdgeInsets.symmetric(
+            horizontal: 20.w,
+            vertical: 20.h,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 图标 - 优化尺寸
-              Container(
-                width: 56.w,
-                height: 56.w,
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(28.r),
-                ),
-                child: Icon(
-                  Icons.warning_amber_rounded,
-                  size: 28.sp,
-                  color: Colors.orange.shade600,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              // 标题 - 优化字体大小
+              // 标题
               Text(
                 title,
                 style: TextStyle(
@@ -1083,12 +1061,12 @@ class GetXDialogUtil {
                   fontWeight: FontWeight.bold,
                   color: Colors.grey.shade800,
                 ),
-                textAlign: TextAlign.center,
+                textAlign: TextAlign.left,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               SizedBox(height: 10.h),
-              // 内容 - 优化字体大小和行高
+              // 内容
               Text(
                 message,
                 style: TextStyle(
@@ -1096,12 +1074,12 @@ class GetXDialogUtil {
                   color: Colors.grey.shade600,
                   height: 1.4,
                 ),
-                textAlign: TextAlign.center,
+                textAlign: TextAlign.left,
                 maxLines: 4,
                 overflow: TextOverflow.ellipsis,
               ),
               SizedBox(height: 24.h),
-              // 按钮 - 优化高度
+              // 按钮
               _buildModernButton(
                 text: buttonText ?? '确定',
                 color: buttonColor ?? Colors.orange.shade600,
@@ -1155,26 +1133,15 @@ class GetXDialogUtil {
           ],
         ),
         child: Padding(
-          padding: EdgeInsets.all(20.w),
+          padding: EdgeInsets.symmetric(
+            horizontal: 20.w,
+            vertical: 20.h,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 图标 - 优化尺寸
-              Container(
-                width: 56.w,
-                height: 56.w,
-                decoration: BoxDecoration(
-                  color: Colors.purple.shade50,
-                  borderRadius: BorderRadius.circular(28.r),
-                ),
-                child: Icon(
-                  Icons.edit_rounded,
-                  size: 28.sp,
-                  color: Colors.purple.shade600,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              // 标题 - 优化字体大小
+              // 标题
               Text(
                 title,
                 style: TextStyle(
@@ -1182,12 +1149,12 @@ class GetXDialogUtil {
                   fontWeight: FontWeight.bold,
                   color: Colors.grey.shade800,
                 ),
-                textAlign: TextAlign.center,
+                textAlign: TextAlign.left,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              SizedBox(height: 20.h),
-              // 输入框 - 优化样式
+              SizedBox(height: 16.h),
+              // 输入框
               Container(
                 decoration: BoxDecoration(
                   color: Colors.grey.shade50,
@@ -1220,7 +1187,7 @@ class GetXDialogUtil {
                 ),
               ),
               SizedBox(height: 20.h),
-              // 按钮 - 优化间距
+              // 按钮
               Row(
                 children: [
                   Expanded(
@@ -1288,40 +1255,21 @@ class GetXDialogUtil {
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 标题 - 优化布局
+            // 标题
             Padding(
-              padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 12.h),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36.w,
-                    height: 36.w,
-                    decoration: BoxDecoration(
-                      color: Colors.teal.shade50,
-                      borderRadius: BorderRadius.circular(18.r),
-                    ),
-                    child: Icon(
-                      Icons.list_rounded,
-                      size: 18.sp,
-                      color: Colors.teal.shade600,
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade800,
-                      ),
-                    ),
-                  ),
-                ],
+              padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 8.h),
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade800,
+                ),
               ),
             ),
-            // 选项列表 - 优化样式
+            // 选项列表
             Flexible(
               child: ListView.builder(
                 shrinkWrap: true,

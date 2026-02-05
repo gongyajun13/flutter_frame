@@ -830,7 +830,7 @@ class PermissionUtil {
     String? dialogTitle,
     String? dialogMessage,
   }) async {
-    GetXDialogUtil.showConfirm(
+    DialogUtil.showConfirm(
       title: dialogTitle ?? '需要权限',
       message: dialogMessage ?? '应用需要此权限才能正常工作，请在设置中开启。',
       confirmText: '去设置',

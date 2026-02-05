@@ -250,16 +250,16 @@ class WebViewBridgeManager {
     
     switch (type) {
       case 'success':
-        GetXSnackBarUtil.success(message: message);
+        SnackBarUtil.success(message: message);
         break;
       case 'error':
-        GetXSnackBarUtil.error(message: message);
+        SnackBarUtil.error(message: message);
         break;
       case 'warning':
-        GetXSnackBarUtil.warning(message: message);
+        SnackBarUtil.warning(message: message);
         break;
       default:
-        GetXSnackBarUtil.info(message: message);
+        SnackBarUtil.info(message: message);
     }
     
     return {'message': '显示成功'};

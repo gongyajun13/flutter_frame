@@ -1,0 +1,88 @@
+{
+  "@@locale": "zh",
+  "appTitle": "Flutter Frame",
+  "@appTitle": {
+    "description": "应用标题"
+  },
+  "welcome": "欢迎",
+  "@welcome": {
+    "description": "欢迎语"
+  },
+  "hello": "你好，{name}",
+  "@hello": {
+    "description": "问候语",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirm": "确认",
+  "@confirm": {
+    "description": "确认按钮"
+  },
+  "cancel": "取消",
+  "@cancel": {
+    "description": "取消按钮"
+  },
+  "ok": "确定",
+  "@ok": {
+    "description": "确定按钮"
+  },
+  "save": "保存",
+  "@save": {
+    "description": "保存按钮"
+  },
+  "delete": "删除",
+  "@delete": {
+    "description": "删除按钮"
+  },
+  "edit": "编辑",
+  "@edit": {
+    "description": "编辑按钮"
+  },
+  "loading": "加载中...",
+  "@loading": {
+    "description": "加载提示"
+  },
+  "noData": "暂无数据",
+  "@noData": {
+    "description": "无数据提示"
+  },
+  "networkError": "网络错误，请检查网络连接",
+  "@networkError": {
+    "description": "网络错误提示"
+  },
+  "operationSuccess": "操作成功",
+  "@operationSuccess": {
+    "description": "操作成功提示"
+  },
+  "operationFailed": "操作失败",
+  "@operationFailed": {
+    "description": "操作失败提示"
+  },
+  "pleaseRetry": "请重试",
+  "@pleaseRetry": {
+    "description": "重试提示"
+  },
+  "language": "语言",
+  "@language": {
+    "description": "语言设置"
+  },
+  "chinese": "中文",
+  "@chinese": {
+    "description": "中文语言"
+  },
+  "english": "英文",
+  "@english": {
+    "description": "英文语言"
+  },
+  "theme": "主题",
+  "@theme": {
+    "description": "主题设置"
+  },
+  "settings": "设置",
+  "@settings": {
+    "description": "设置"
+  }
+}

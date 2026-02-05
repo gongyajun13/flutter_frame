@@ -336,7 +336,7 @@ class LocalCacheDemoController extends BaseController {
 
   /// 测试清空所有数据
   void testClearAll() {
-    GetXDialogUtil.showConfirm(
+    DialogUtil.showConfirm(
       title: '确认清空',
       message: '确定要清空所有本地缓存数据吗？此操作不可恢复！',
       confirmText: '确定清空',

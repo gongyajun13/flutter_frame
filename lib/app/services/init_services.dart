@@ -8,6 +8,8 @@ import '../../utils/local_cache_util.dart';
 import '../../utils/performance_monitor.dart';
 import '../controllers/theme_controller.dart';
 import '../services/theme_service.dart';
+import '../controllers/locale_controller.dart';
+import '../services/locale_service.dart';
 
 /// 初始化所有全局服务
 /// 
@@ -40,8 +42,18 @@ class InitServices {
     final themeController = Get.put(ThemeController());
     themeController.themeMode.value = themeMode;
     themeController.currentTheme.value = currentTheme;
+    
+    // 7. 预加载语言设置（避免 LocaleController 异步加载导致延迟）
+    final localeService = LocaleService();
+    final savedLocale = await localeService.getSavedLocale();
+    
+    // 8. 创建并初始化语言控制器（同步设置语言，避免首次渲染闪烁）
+    final localeController = Get.put(LocaleController());
+    if (savedLocale != null) {
+      localeController.currentLocale.value = savedLocale;
+    }
 
-    // 7. 初始化性能监控（开发/测试环境默认启用；也可在面板内开关控制）
+    // 9. 初始化性能监控（开发/测试环境默认启用；也可在面板内开关控制）
     if (envConfig.enableConsoleLog) {
       PerformanceMonitor.instance.start();
     }

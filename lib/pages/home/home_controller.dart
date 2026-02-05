@@ -24,10 +24,10 @@ class HomeController extends BaseController {
       description: '演示 ScreenUtil 屏幕适配',
     ),
     DemoItem(
-      title: 'GetX 工具演示',
+      title: '提示弹窗工具',
       route: Routes.GETX_UTILS_DEMO,
-      icon: '🛠️',
-      description: 'SnackBar、Dialog 等工具',
+      icon: '🔔',
+      description: 'Toast、SnackBar、Dialog 等提示弹窗工具',
     ),
     DemoItem(
       title: '缓存图片Widget演示',
@@ -117,6 +117,13 @@ class HomeController extends BaseController {
       route: Routes.FILE_DOWNLOAD_DEMO,
       icon: '⬇️',
       description: '文件下载、进度显示、下载管理',
+    ),
+    // 国际化演示
+    DemoItem(
+      title: '国际化演示',
+      route: Routes.I18N_DEMO,
+      icon: '🌍',
+      description: '多语言支持、语言切换、国际化文本',
     ),
   ];
 

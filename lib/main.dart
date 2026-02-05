@@ -6,9 +6,11 @@ import 'package:get/get.dart';
 import 'app/routes/app_pages.dart';
 import 'app/services/init_services.dart';
 import 'app/controllers/theme_controller.dart';
+import 'app/controllers/locale_controller.dart';
 import 'app/widgets/live_theme_preview.dart';
 import 'widgets/debug_panel/debug_panel_controller.dart';
 import 'widgets/debug_panel/debug_ball.dart';
+import 'l10n/app_localizations.dart';
 
 void main() async {
   // 确保 Flutter Binding 初始化
@@ -37,6 +39,7 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return Obx(() {
           final themeController = Get.find<ThemeController>();
+          final localeController = Get.find<LocaleController>();
           return ThemeTransitionWrapper(
             child: GetMaterialApp(
               title: 'Flutter Frame',
@@ -46,17 +49,15 @@ class MyApp extends StatelessWidget {
                   ? themeController.currentThemeData
                   : ThemeData.dark(),
               themeMode: themeController.themeMode.value,
-              // 本地化配置
-              locale: const Locale('zh', 'CN'),
+              // 本地化配置 - 使用 LocaleController 管理的语言
+              locale: localeController.currentLocale.value,
               localizationsDelegates: const [
                 GlobalMaterialLocalizations.delegate,
                 GlobalWidgetsLocalizations.delegate,
                 GlobalCupertinoLocalizations.delegate,
+                AppLocalizations.delegate,
               ],
-              supportedLocales: const [
-                Locale('zh', 'CN'),
-                Locale('en', 'US'),
-              ],
+              supportedLocales: LocaleController.supportedLocales,
               // GetX 路由配置
               initialRoute: AppPages.INITIAL,
               getPages: AppPages.routes,

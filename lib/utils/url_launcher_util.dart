@@ -359,7 +359,7 @@ class UrlLauncherUtil {
     String? cancelText,
     ul.LaunchMode mode = ul.LaunchMode.platformDefault,
   }) async {
-    GetXDialogUtil.showConfirm(
+    DialogUtil.showConfirm(
       title: title ?? '确认跳转',
       message: message ?? '即将跳转到：\n$url',
       confirmText: confirmText ?? '确认',
@@ -380,7 +380,7 @@ class UrlLauncherUtil {
     String? confirmText,
     String? cancelText,
   }) async {
-    GetXDialogUtil.showConfirm(
+    DialogUtil.showConfirm(
       title: title ?? '确认拨打电话',
       message: message ?? '即将拨打电话：\n$phoneNumber',
       confirmText: confirmText ?? '拨打',
@@ -403,7 +403,7 @@ class UrlLauncherUtil {
     String? confirmText,
     String? cancelText,
   }) async {
-    GetXDialogUtil.showConfirm(
+    DialogUtil.showConfirm(
       title: title ?? '确认发送邮件',
       message: message ?? '即将发送邮件到：\n$to',
       confirmText: confirmText ?? '发送',
@@ -518,25 +518,25 @@ class UrlLauncherUtil {
   ) {
     switch (result) {
       case LaunchResult.success:
-        GetXSnackBarUtil.success(
+        SnackBarUtil.success(
           message: '跳转成功',
           title: '操作完成',
         );
         break;
       case LaunchResult.failed:
-        GetXSnackBarUtil.error(
+        SnackBarUtil.error(
           message: '跳转失败：$target',
           title: '操作失败',
         );
         break;
       case LaunchResult.notSupported:
-        GetXSnackBarUtil.warning(
+        SnackBarUtil.warning(
           message: '当前设备不支持此操作',
           title: '不支持',
         );
         break;
       case LaunchResult.cancelled:
-        GetXSnackBarUtil.info(
+        SnackBarUtil.info(
           message: '用户取消了操作',
           title: '已取消',
         );
