@@ -1,160 +1,52 @@
 import 'package:flutter/material.dart';
+import '../app/controllers/locale_controller.dart';
+import 's.dart';
 
-/// 应用本地化类
-/// 提供应用内所有文本的国际化支持
+/// 供 MaterialApp localizationsDelegates 使用，内部文案统一走 [S]。
+/// 业务里直接用 [S.confirm]、[S.hello('名')] 等即可。
 class AppLocalizations {
+  AppLocalizations(this.locale);
   final Locale locale;
 
-  AppLocalizations(this.locale);
-
-  static AppLocalizations? of(BuildContext context) {
-    return Localizations.of<AppLocalizations>(context, AppLocalizations);
-  }
+  static AppLocalizations? of(BuildContext context) =>
+      Localizations.of<AppLocalizations>(context, AppLocalizations);
 
   static const LocalizationsDelegate<AppLocalizations> delegate =
       _AppLocalizationsDelegate();
 
-  // 支持的语言列表
-  static const List<Locale> supportedLocales = [
-    Locale('zh', 'CN'),
-    Locale('en', 'US'),
-  ];
+  static List<Locale> get supportedLocales => LocaleController.supportedLocales;
 
-  // 翻译映射表
-  static const Map<String, Map<String, String>> _localizedValues = {
-    'zh': {
-      'appTitle': 'Flutter Frame',
-      'welcome': '欢迎',
-      'confirm': '确认',
-      'cancel': '取消',
-      'ok': '确定',
-      'save': '保存',
-      'delete': '删除',
-      'edit': '编辑',
-      'loading': '加载中...',
-      'noData': '暂无数据',
-      'networkError': '网络错误，请检查网络连接',
-      'operationSuccess': '操作成功',
-      'operationFailed': '操作失败',
-      'pleaseRetry': '请重试',
-      'language': '语言',
-      'chinese': '中文',
-      'english': '英文',
-      'theme': '主题',
-      'settings': '设置',
-    },
-    'en': {
-      'appTitle': 'Flutter Frame',
-      'welcome': 'Welcome',
-      'confirm': 'Confirm',
-      'cancel': 'Cancel',
-      'ok': 'OK',
-      'save': 'Save',
-      'delete': 'Delete',
-      'edit': 'Edit',
-      'loading': 'Loading...',
-      'noData': 'No Data',
-      'networkError': 'Network error, please check your connection',
-      'operationSuccess': 'Operation successful',
-      'operationFailed': 'Operation failed',
-      'pleaseRetry': 'Please retry',
-      'language': 'Language',
-      'chinese': 'Chinese',
-      'english': 'English',
-      'theme': 'Theme',
-      'settings': 'Settings',
-    },
-  };
-
-  String _getLocalizedValue(String key) {
-    final languageCode = locale.languageCode;
-    final values = _localizedValues[languageCode] ?? _localizedValues['en']!;
-    return values[key] ?? key;
-  }
-
-  // 应用标题
-  String get appTitle => _getLocalizedValue('appTitle');
-
-  // 欢迎语
-  String get welcome => _getLocalizedValue('welcome');
-
-  // 问候语（带参数）
-  String hello(String name) {
-    final languageCode = locale.languageCode;
-    if (languageCode == 'zh') {
-      return '你好，$name';
-    } else {
-      return 'Hello, $name';
-    }
-  }
-
-  // 确认
-  String get confirm => _getLocalizedValue('confirm');
-
-  // 取消
-  String get cancel => _getLocalizedValue('cancel');
-
-  // 确定
-  String get ok => _getLocalizedValue('ok');
-
-  // 保存
-  String get save => _getLocalizedValue('save');
-
-  // 删除
-  String get delete => _getLocalizedValue('delete');
-
-  // 编辑
-  String get edit => _getLocalizedValue('edit');
-
-  // 加载中
-  String get loading => _getLocalizedValue('loading');
-
-  // 暂无数据
-  String get noData => _getLocalizedValue('noData');
-
-  // 网络错误
-  String get networkError => _getLocalizedValue('networkError');
-
-  // 操作成功
-  String get operationSuccess => _getLocalizedValue('operationSuccess');
-
-  // 操作失败
-  String get operationFailed => _getLocalizedValue('operationFailed');
-
-  // 请重试
-  String get pleaseRetry => _getLocalizedValue('pleaseRetry');
-
-  // 语言
-  String get language => _getLocalizedValue('language');
-
-  // 中文
-  String get chinese => _getLocalizedValue('chinese');
-
-  // 英文
-  String get english => _getLocalizedValue('english');
-
-  // 主题
-  String get theme => _getLocalizedValue('theme');
-
-  // 设置
-  String get settings => _getLocalizedValue('settings');
+  String get appTitle => S.t(locale, 'appTitle');
+  String get welcome => S.t(locale, 'welcome');
+  String hello(String name) => locale.languageCode == 'zh' ? '你好，$name' : 'Hello, $name';
+  String get confirm => S.t(locale, 'confirm');
+  String get cancel => S.t(locale, 'cancel');
+  String get ok => S.t(locale, 'ok');
+  String get save => S.t(locale, 'save');
+  String get delete => S.t(locale, 'delete');
+  String get edit => S.t(locale, 'edit');
+  String get loading => S.t(locale, 'loading');
+  String get noData => S.t(locale, 'noData');
+  String get networkError => S.t(locale, 'networkError');
+  String get operationSuccess => S.t(locale, 'operationSuccess');
+  String get operationFailed => S.t(locale, 'operationFailed');
+  String get pleaseRetry => S.t(locale, 'pleaseRetry');
+  String get language => S.t(locale, 'language');
+  String get chinese => S.t(locale, 'chinese');
+  String get english => S.t(locale, 'english');
+  String get theme => S.t(locale, 'theme');
+  String get settings => S.t(locale, 'settings');
 }
 
-/// 本地化代理
-class _AppLocalizationsDelegate
-    extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
-  bool isSupported(Locale locale) {
-    return AppLocalizations.supportedLocales
-        .any((l) => l.languageCode == locale.languageCode);
-  }
+  bool isSupported(Locale locale) =>
+      LocaleController.supportedLocales.any((l) => l.languageCode == locale.languageCode);
 
   @override
-  Future<AppLocalizations> load(Locale locale) async {
-    return AppLocalizations(locale);
-  }
+  Future<AppLocalizations> load(Locale locale) async => AppLocalizations(locale);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;

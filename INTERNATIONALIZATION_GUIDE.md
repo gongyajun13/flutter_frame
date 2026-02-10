@@ -12,32 +12,24 @@
 - ✅ **GetX 集成** - 与 GetX 状态管理完美集成
 - ✅ **系统语言检测** - 自动检测并应用系统语言
 
-## 🚀 使用方法
+## 🚀 使用方法（推荐：用 S，简单）
 
-### 1. 在 Widget 中使用国际化文本
+### 1. 用 S 取文案（无需 context，任意处可用）
 
 ```dart
-import 'package:flutter/material.dart';
-import '../../l10n/app_localizations.dart';
+import '../../l10n/s.dart';
 
-class MyWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    
-    return Column(
-      children: [
-        Text(l10n.welcome),
-        Text(l10n.hello('张三')),
-        ElevatedButton(
-          onPressed: () {},
-          child: Text(l10n.confirm),
-        ),
-      ],
-    );
-  }
-}
+// 在 Widget 里（需随语言更新时用 Obx 包一层）
+Obx(() => Text(S.confirm));
+Obx(() => Text(S.hello('张三')));
+
+// 在 Controller 里
+showSuccess(S.operationSuccess);
 ```
+
+- **Widget 中**：需要随语言切换更新时，用 `Obx(() => Text(S.xxx))`。
+- **Controller 中**：直接 `S.confirm`、`S.hello('名')` 等。
+- **新增文案**：在 `lib/l10n/s.dart` 的 `_strings` 里为 zh/en 各加一条，再补一个 `static String get xxx => _t('xxx');` 即可。
 
 ### 2. 在 Controller 中切换语言
 
@@ -65,7 +57,7 @@ class MyController extends GetxController {
 }
 ```
 
-### 3. 获取当前语言
+### 3. 获取当前语言（LocaleController）
 
 ```dart
 final localeController = Get.find<LocaleController>();
@@ -87,50 +79,29 @@ String languageName = localeController.currentLanguageName;
 
 ```dart
 import 'package:get/get.dart';
-import '../../l10n/app_localizations.dart';
+import '../../l10n/s.dart';
 
 class MyController extends GetxController {
-  // 注意：在 GetX 中需要使用 Get.context 或传递 context
-  String getWelcomeText() {
-    final context = Get.context!;
-    final l10n = AppLocalizations.of(context)!;
-    return l10n.welcome;
-  }
+  String getWelcomeText() => S.welcome;
 }
 ```
 
 ## 📝 添加新的翻译文本
 
-### 方法 1: 直接编辑 app_localizations.dart
+### 新增/修改文案（唯一入口：S）
 
-编辑 `lib/l10n/app_localizations.dart` 文件：
+编辑 `lib/l10n/s.dart`：
 
-1. 在 `_localizedValues` 中添加新的键值对
-2. 在类中添加对应的 getter 方法
+1. 在 `_strings` 里为 `zh`、`en` 各加一条 key；
+2. 在类中加一行 getter：`static String get myNewText => _t('myNewText');`
 
 ```dart
-// 在 _localizedValues 中添加
-'zh': {
-  // ... 现有翻译
-  'myNewText': '我的新文本',
-},
-'en': {
-  // ... 现有翻译
-  'myNewText': 'My New Text',
-},
+// _strings 中
+'zh': { ..., 'myNewText': '我的新文本' },
+'en': { ..., 'myNewText': 'My New Text' },
 
-// 在类中添加 getter
-String get myNewText => _getLocalizedValue('myNewText');
-```
-
-### 方法 2: 使用 ARB 文件（推荐，用于代码生成）
-
-1. 编辑 `lib/l10n/app_zh.arb` 和 `lib/l10n/app_en.arb`
-2. 运行代码生成命令（需要先安装依赖）：
-
-```bash
-flutter pub get
-flutter gen-l10n
+// 类中
+static String get myNewText => _t('myNewText');
 ```
 
 ## 🔧 添加新语言
@@ -149,13 +120,13 @@ static const List<Locale> supportedLocales = [
 
 ### 步骤 2: 添加翻译文本
 
-在 `lib/l10n/app_localizations.dart` 的 `_localizedValues` 中添加：
+在 `lib/l10n/s.dart` 的 `_strings` 中增加对应语言：
 
 ```dart
 'ja': {
   'appTitle': 'Flutter Frame',
   'welcome': 'ようこそ',
-  // ... 其他翻译
+  // ... 与 zh/en 同 key
 },
 ```
 
@@ -163,20 +134,19 @@ static const List<Locale> supportedLocales = [
 
 `main.dart` 中的 `supportedLocales` 会自动从 `LocaleController.supportedLocales` 获取，无需手动更新。
 
-## 📁 文件结构
+## 📁 文件结构（精简后）
 
 ```
 lib/
 ├── l10n/
-│   ├── app_localizations.dart      # 本地化类（主要文件）
-│   ├── app_zh.arb                  # 中文翻译资源（用于代码生成）
-│   └── app_en.arb                  # 英文翻译资源（用于代码生成）
+│   ├── s.dart                      # 唯一文案源：_strings + S.xxx 入口
+│   └── app_localizations.dart      # 薄封装，供 MaterialApp delegate 用
 ├── app/
 │   ├── controllers/
-│   │   └── locale_controller.dart  # 语言控制器
+│   │   └── locale_controller.dart  # 语言切换与 supportedLocales
 │   └── services/
-│       └── locale_service.dart     # 语言服务（持久化）
-└── main.dart                       # 应用入口（已集成）
+│       └── locale_service.dart     # 语言持久化
+└── main.dart
 ```
 
 ## 🎨 使用示例
@@ -193,7 +163,7 @@ class LanguageSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localeController = Get.find<LocaleController>();
-    final l10n = AppLocalizations.of(context)!;
+    // 文案用 S，无需 context
     
     return Obx(() => DropdownButton<Locale>(
       value: localeController.currentLocale.value,
@@ -217,27 +187,25 @@ class LanguageSelector extends StatelessWidget {
 
 ```dart
 import 'package:flutter/material.dart';
-import '../../l10n/app_localizations.dart';
+import '../../l10n/s.dart';
 
 void showConfirmDialog(BuildContext context) {
-  final l10n = AppLocalizations.of(context)!;
-  
   showDialog(
     context: context,
     builder: (context) => AlertDialog(
-      title: Text(l10n.confirm),
+      title: Text(S.confirm),
       content: Text('确定要执行此操作吗？'),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(l10n.cancel),
+          child: Text(S.cancel),
         ),
         TextButton(
           onPressed: () {
             // 执行操作
             Navigator.pop(context);
           },
-          child: Text(l10n.ok),
+          child: Text(S.ok),
         ),
       ],
     ),
@@ -272,9 +240,9 @@ void showConfirmDialog(BuildContext context) {
 
 ## 💡 最佳实践
 
-1. **始终使用 AppLocalizations** - 不要硬编码文本字符串
-2. **在 Widget 中使用 context** - 通过 `AppLocalizations.of(context)` 获取翻译
-3. **在 Controller 中使用 Get.context** - 如果需要在 Controller 中使用，使用 `Get.context!`
+1. **统一用 S** - 不要硬编码文案，用 `S.confirm`、`S.hello('名')` 等
+2. **在 Widget 中** - 需随语言更新时用 `Obx(() => Text(S.xxx))`
+3. **在 Controller 中** - 直接 `S.xxx`，无需 context
 4. **添加新文本时同步更新所有语言** - 确保所有语言都有对应的翻译
 5. **使用有意义的键名** - 使用描述性的键名，便于维护
 
@@ -286,7 +254,7 @@ void showConfirmDialog(BuildContext context) {
 
 ### 问题：某些文本没有翻译
 
-**解决方案**：检查 `app_localizations.dart` 中是否添加了对应的翻译文本。
+**解决方案**：在 `lib/l10n/s.dart` 的 `_strings` 中补全对应 key 的翻译。
 
 ### 问题：语言设置没有保存
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../base/base_controller.dart';
 import '../models/theme_model.dart';
@@ -35,6 +36,22 @@ class ThemeController extends BaseController {
       _loadThemeFromStorage();
     }
     _setupAnimationController();
+    _updateSystemUIOverlayStyle();
+  }
+
+  /// 根据当前主题更新状态栏/导航栏内容颜色：深色主题用白色，浅色主题用黑色
+  void _updateSystemUIOverlayStyle() {
+    final isDark = isDarkTheme;
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        systemNavigationBarDividerColor: Colors.transparent,
+      ),
+    );
   }
   
   @override
@@ -61,6 +78,7 @@ class ThemeController extends BaseController {
       
       themeMode.value = savedThemeMode;
       currentTheme.value = savedTheme;
+      _updateSystemUIOverlayStyle();
     } catch (e) {
       debugPrint('加载主题设置失败: $e');
     }
@@ -94,6 +112,7 @@ class ThemeController extends BaseController {
         final systemBrightness = MediaQuery.of(Get.context!).platformBrightness;
         await switchToTheme(systemBrightness == Brightness.dark ? AppTheme.dark : AppTheme.light);
       }
+      _updateSystemUIOverlayStyle();
       
       // 反向播放动画（如果有动画控制器）
       if (_animationController != null) {
@@ -124,6 +143,7 @@ class ThemeController extends BaseController {
       
       // 强制更新UI
       forceUpdateTheme();
+      _updateSystemUIOverlayStyle();
       
       // 反向播放动画（如果有动画控制器）
       if (_animationController != null) {
@@ -170,18 +190,28 @@ class ThemeController extends BaseController {
   
   /// 获取当前主题的Material主题数据
   ThemeData get currentThemeData {
+    final theme = currentTheme.value;
     return ThemeData(
-      colorScheme: currentTheme.value.colorScheme,
+      colorScheme: theme.colorScheme,
       useMaterial3: true,
-      brightness: currentTheme.value.brightness,
-      primaryColor: currentTheme.value.primaryColor,
-      scaffoldBackgroundColor: currentTheme.value.backgroundColor,
-      cardColor: currentTheme.value.surfaceColor,
+      brightness: theme.brightness,
+      primaryColor: theme.primaryColor,
+      scaffoldBackgroundColor: theme.backgroundColor,
+      cardColor: theme.surfaceColor,
       textTheme: _buildTextTheme(),
       appBarTheme: _buildAppBarTheme(),
       elevatedButtonTheme: _buildElevatedButtonTheme(),
       cardTheme: _buildCardTheme(),
       inputDecorationTheme: _buildInputDecorationTheme(),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: theme.surfaceColor,
+        contentTextStyle: TextStyle(
+          fontSize: 14,
+          color: theme.textColor,
+          fontWeight: FontWeight.w500,
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
   

@@ -16,6 +16,28 @@ class DialogUtil {
   // 私有构造函数，防止实例化
   DialogUtil._();
 
+  /// 随主题的对话框背景色与文字色（深色主题用浅字，浅色主题用深字）
+  static (Color bg, Color title, Color body, Color surface) _dialogThemeColors() {
+    if (Get.context == null) {
+      return (Colors.white, Colors.grey.shade800, Colors.grey.shade600, Colors.grey.shade50);
+    }
+    final theme = Theme.of(Get.context!);
+    final isDark = theme.brightness == Brightness.dark;
+    return isDark
+        ? (
+            theme.scaffoldBackgroundColor,
+            theme.textTheme.titleLarge?.color ?? Colors.white,
+            theme.textTheme.bodyMedium?.color ?? Colors.white70,
+            theme.colorScheme.surfaceContainerHighest,
+          )
+        : (
+            theme.scaffoldBackgroundColor,
+            theme.textTheme.titleLarge?.color ?? Colors.grey.shade800,
+            theme.textTheme.bodyMedium?.color ?? Colors.grey.shade600,
+            theme.colorScheme.surfaceContainerLowest,
+          );
+  }
+
 
   /// 显示Loading对话框
   static void showLoading({
@@ -259,18 +281,17 @@ class DialogUtil {
     Widget? header,
     Widget? footer,
   }) {
+    final (bg, titleColor, _, _) = _dialogThemeColors();
     return Center(
       child: Container(
-        // 优化：根据屏幕宽度动态调整边距
         margin: margin ?? EdgeInsets.symmetric(horizontal: Get.width * 0.08),
-        // 优化：设置最小和最大宽度
         constraints: BoxConstraints(
           minWidth: 280.w,
           maxWidth: Get.width * 0.85,
           maxHeight: Get.height * 0.8,
         ),
         decoration: BoxDecoration(
-          color: backgroundColor ?? Colors.white,
+          color: backgroundColor ?? bg,
           borderRadius: BorderRadius.circular(borderRadius ?? 20.r),
           boxShadow: boxShadow ?? [
             BoxShadow(
@@ -286,7 +307,6 @@ class DialogUtil {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 头部
               if (header != null || title != null || showCloseButton) ...[
                 _buildCustomDialogHeader(
                   title: title,
@@ -294,6 +314,7 @@ class DialogUtil {
                   onClose: onClose,
                   centerTitle: centerTitle,
                   header: header,
+                  titleColor: titleColor,
                 ),
               ],
               
@@ -323,26 +344,28 @@ class DialogUtil {
     VoidCallback? onClose,
     bool centerTitle = true,
     Widget? header,
+    Color? titleColor,
   }) {
+    final (_, titleC, _, _) = _dialogThemeColors();
+    final color = titleColor ?? titleC;
     return Container(
       padding: EdgeInsets.fromLTRB(20.w, 16.h, 16.w, 12.h),
       child: SizedBox(
-        height: 36.h,  // 固定高度，避免 Stack 布局问题
+        height: 36.h,
         child: Stack(
           children: [
-            // 标题（居中布局）
             if (title != null) ...[
               Center(
                 child: Padding(
                   padding: showCloseButton 
-                    ? EdgeInsets.symmetric(horizontal: 48.w) // 为关闭按钮留出空间
+                    ? EdgeInsets.symmetric(horizontal: 48.w)
                     : EdgeInsets.zero,
                   child: Text(
                     title,
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade800,
+                      color: color,
                       letterSpacing: 0.2,
                     ),
                     textAlign: TextAlign.center,
@@ -534,10 +557,11 @@ class DialogUtil {
     VoidCallback? onClose,
     Color? backgroundColor,
   }) {
+    final (bg, _, _, _) = _dialogThemeColors();
     return Container(
       width: double.infinity,
       height: double.infinity,
-      color: backgroundColor ?? Colors.white,
+      color: backgroundColor ?? bg,
       child: Material(
         color: Colors.transparent,
         child: Column(
@@ -835,21 +859,19 @@ class DialogUtil {
 
   /// 构建Loading对话框
   static Widget _buildLoadingDialog(String? message) {
+    final (bg, _, body, _) = _dialogThemeColors();
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
       child: Container(
-        // 优化：根据屏幕宽度动态调整边距
         margin: EdgeInsets.symmetric(horizontal: Get.width * 0.15),
-        // 优化：根据内容动态调整内边距
         padding: EdgeInsets.all(24.w),
-        // 优化：设置最小和最大宽度
         constraints: BoxConstraints(
           minWidth: 200.w,
           maxWidth: Get.width * 0.7,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: bg,
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
@@ -863,7 +885,6 @@ class DialogUtil {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 加载动画 - 优化尺寸
             Container(
               width: 50.w,
               height: 50.w,
@@ -895,7 +916,7 @@ class DialogUtil {
                 message,
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: Colors.grey.shade700,
+                  color: body,
                   fontWeight: FontWeight.w500,
                 ),
                 textAlign: TextAlign.center,
@@ -920,19 +941,17 @@ class DialogUtil {
     Color? confirmColor,
     Color? cancelColor,
   }) {
+    final (bg, titleColor, bodyColor, _) = _dialogThemeColors();
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
       child: Container(
-        // 优化：根据屏幕宽度动态调整边距
-        // margin: EdgeInsets.symmetric(horizontal: Get.width * 0.1),
-        // 优化：设置最小和最大宽度
         constraints: BoxConstraints(
           minWidth: 280.w,
           maxWidth: Get.width * 0.8,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: bg,
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
@@ -952,25 +971,23 @@ class DialogUtil {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 标题
               Text(
                 title,
                 style: TextStyle(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
+                  color: titleColor,
                 ),
                 textAlign: TextAlign.left,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               SizedBox(height: 10.h),
-              // 内容
               Text(
                 message,
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: Colors.grey.shade600,
+                  color: bodyColor,
                   height: 1.4,
                 ),
                 textAlign: TextAlign.left,
@@ -1021,19 +1038,17 @@ class DialogUtil {
     VoidCallback? onPressed,
     Color? buttonColor,
   }) {
+    final (bg, titleColor, bodyColor, _) = _dialogThemeColors();
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
       child: Container(
-        // 优化：根据屏幕宽度动态调整边距
-        // margin: EdgeInsets.symmetric(horizontal: Get.width * 0.1),
-        // 优化：设置最小和最大宽度
         constraints: BoxConstraints(
           minWidth: 280.w,
           maxWidth: Get.width * 0.8,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: bg,
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
@@ -1053,25 +1068,23 @@ class DialogUtil {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 标题
               Text(
                 title,
                 style: TextStyle(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
+                  color: titleColor,
                 ),
                 textAlign: TextAlign.left,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               SizedBox(height: 10.h),
-              // 内容
               Text(
                 message,
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: Colors.grey.shade600,
+                  color: bodyColor,
                   height: 1.4,
                 ),
                 textAlign: TextAlign.left,
@@ -1079,7 +1092,6 @@ class DialogUtil {
                 overflow: TextOverflow.ellipsis,
               ),
               SizedBox(height: 24.h),
-              // 按钮
               _buildModernButton(
                 text: buttonText ?? '确定',
                 color: buttonColor ?? Colors.orange.shade600,
@@ -1109,19 +1121,17 @@ class DialogUtil {
     int? maxLines,
     int? maxLength,
   }) {
+    final (bg, titleColor, bodyColor, surface) = _dialogThemeColors();
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
       child: Container(
-        // 优化：根据屏幕宽度动态调整边距
-        // margin: EdgeInsets.symmetric(horizontal: Get.width * 0.1),
-        // 优化：设置最小和最大宽度
         constraints: BoxConstraints(
           minWidth: 280.w,
           maxWidth: Get.width * 0.8,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: bg,
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
@@ -1141,25 +1151,23 @@ class DialogUtil {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 标题
               Text(
                 title,
                 style: TextStyle(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
+                  color: titleColor,
                 ),
                 textAlign: TextAlign.left,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               SizedBox(height: 16.h),
-              // 输入框
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: surface,
                   borderRadius: BorderRadius.circular(10.r),
-                  border: Border.all(color: Colors.grey.shade200, width: 1.w),
+                  border: Border.all(color: surface, width: 1.w),
                 ),
                 child: TextField(
                   controller: controller,
@@ -1168,13 +1176,13 @@ class DialogUtil {
                   maxLength: maxLength,
                   style: TextStyle(
                     fontSize: 14.sp,
-                    color: Colors.grey.shade800,
+                    color: bodyColor,
                   ),
                   decoration: InputDecoration(
                     hintText: hintText,
                     hintStyle: TextStyle(
                       fontSize: 14.sp,
-                      color: Colors.grey.shade500,
+                      color: bodyColor.withOpacity(0.6),
                     ),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(
@@ -1229,20 +1237,18 @@ class DialogUtil {
     Function(int index, String option)? onSelected,
     VoidCallback? onCancel,
   }) {
+    final (bg, titleColor, bodyColor, surface) = _dialogThemeColors();
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
       child: Container(
-        // 优化：根据屏幕宽度动态调整边距
-        // margin: EdgeInsets.symmetric(horizontal: Get.width * 0.1),
-        // 优化：设置最小和最大宽度，限制最大高度
         constraints: BoxConstraints(
           minWidth: 280.w,
           maxWidth: Get.width * 0.8,
           maxHeight: Get.height * 0.6,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: bg,
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
@@ -1257,7 +1263,6 @@ class DialogUtil {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 标题
             Padding(
               padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 8.h),
               child: Text(
@@ -1265,11 +1270,10 @@ class DialogUtil {
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
+                  color: titleColor,
                 ),
               ),
             ),
-            // 选项列表
             Flexible(
               child: ListView.builder(
                 shrinkWrap: true,
@@ -1294,7 +1298,7 @@ class DialogUtil {
                               vertical: 14.h,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade50,
+                              color: surface,
                               borderRadius: BorderRadius.circular(10.r),
                             ),
                             child: Row(
@@ -1313,7 +1317,7 @@ class DialogUtil {
                                     option,
                                     style: TextStyle(
                                       fontSize: 14.sp,
-                                      color: Colors.grey.shade700,
+                                      color: bodyColor,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -1321,7 +1325,7 @@ class DialogUtil {
                                 Icon(
                                   Icons.arrow_forward_ios_rounded,
                                   size: 12.sp,
-                                  color: Colors.grey.shade400,
+                                  color: bodyColor.withOpacity(0.6),
                                 ),
                               ],
                             ),

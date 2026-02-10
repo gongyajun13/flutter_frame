@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../app/controllers/theme_controller.dart';
 
 /// SnackBar类型枚举
 enum SnackBarType {
@@ -357,39 +358,46 @@ class SnackBarUtil {
     });
   }
 
-  /// 获取SnackBar样式配置
+  /// 获取SnackBar样式配置（内容文字颜色随主题：深色主题用白色，浅色主题用黑色）
   static SnackBarStyle _getSnackBarStyle(SnackBarType type) {
+    Color contentColor;
+    try {
+      final themeController = Get.find<ThemeController>();
+      contentColor = themeController.isDarkTheme ? Colors.white : Colors.black87;
+    } catch (_) {
+      contentColor = Colors.white;
+    }
     switch (type) {
       case SnackBarType.success:
         return SnackBarStyle(
           title: '成功',
           backgroundColor: Colors.green.shade600,
-          textColor: Colors.white,
-          iconColor: Colors.white,
+          textColor: contentColor,
+          iconColor: contentColor,
           icon: Icons.check_circle,
         );
       case SnackBarType.error:
         return SnackBarStyle(
           title: '错误',
           backgroundColor: Colors.red.shade600,
-          textColor: Colors.white,
-          iconColor: Colors.white,
+          textColor: contentColor,
+          iconColor: contentColor,
           icon: Icons.error,
         );
       case SnackBarType.warning:
         return SnackBarStyle(
           title: '警告',
           backgroundColor: Colors.orange.shade600,
-          textColor: Colors.white,
-          iconColor: Colors.white,
+          textColor: contentColor,
+          iconColor: contentColor,
           icon: Icons.warning,
         );
       case SnackBarType.info:
         return SnackBarStyle(
           title: '提示',
           backgroundColor: Colors.blue.shade600,
-          textColor: Colors.white,
-          iconColor: Colors.white,
+          textColor: contentColor,
+          iconColor: contentColor,
           icon: Icons.info,
         );
     }

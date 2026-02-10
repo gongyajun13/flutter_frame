@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
+import '../app/controllers/theme_controller.dart';
 import '../utils/error_monitor_service.dart';
 
 /// Controller 基类
@@ -201,14 +202,29 @@ abstract class BaseController extends GetxController {
 
   // ==================== 工具方法 ====================
 
+  /// 获取 SnackBar 随主题的背景色和文字色
+  static (Color bg, Color text) _snackBarThemeColors() {
+    try {
+      final themeController = Get.find<ThemeController>();
+      final isDark = themeController.isDarkTheme;
+      return isDark
+          ? (Colors.grey.shade800, Colors.white)
+          : (Colors.grey.shade200, Colors.black87);
+    } catch (_) {
+      return (Colors.grey.shade200, Colors.black87);
+    }
+  }
+
   /// 显示成功提示
   void showSuccess(String message) {
-    Get.snackbar('成功', message);
+    final (bg, text) = _snackBarThemeColors();
+    Get.snackbar('成功', message, backgroundColor: bg, colorText: text);
   }
 
   /// 显示错误提示
   void showError(String message, {Object? error, StackTrace? stackTrace}) {
-    Get.snackbar('错误', message);
+    final (bg, text) = _snackBarThemeColors();
+    Get.snackbar('错误', message, backgroundColor: bg, colorText: text);
     
     // 上报错误到错误监控系统
     if (error != null) {
@@ -228,12 +244,14 @@ abstract class BaseController extends GetxController {
 
   /// 显示警告提示
   void showWarning(String message) {
-    Get.snackbar('警告', message);
+    final (bg, text) = _snackBarThemeColors();
+    Get.snackbar('警告', message, backgroundColor: bg, colorText: text);
   }
 
   /// 显示信息提示
   void showInfo(String message) {
-    Get.snackbar('提示', message);
+    final (bg, text) = _snackBarThemeColors();
+    Get.snackbar('提示', message, backgroundColor: bg, colorText: text);
   }
 
   /// 导航到指定路由

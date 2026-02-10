@@ -5,7 +5,7 @@ import '../../base/base_page.dart';
 import '../../theme/app_design_tokens.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/app_button.dart';
-import '../../l10n/app_localizations.dart';
+import '../../l10n/s.dart';
 import 'i18n_demo_controller.dart';
 
 /// 国际化演示页面
@@ -13,16 +13,15 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
   const I18nDemoPage({super.key});
 
   @override
-  String? get pageTitle => null; // 使用国际化标题
+  String? get pageTitle => null;
 
   @override
   PreferredSizeWidget? buildAppBar(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return AppBar(
-      title: Text(
-        l10n.language,
+      title: Obx(() => Text(
+        S.language,
         style: TextStyle(fontSize: AppDesignTokens.fontSize18),
-      ),
+      )),
       backgroundColor: AppDesignTokens.primaryColor,
       foregroundColor: Colors.white,
       centerTitle: true,
@@ -38,68 +37,42 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
 
   @override
   Widget buildScrollContent(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    
-    return Column(
+    return Obx(() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 语言切换卡片
-        _buildLanguageSelectorCard(l10n),
-        
+        _buildLanguageSelectorCard(),
         SizedBox(height: AppDesignTokens.spacingV16),
-        
-        // 基本翻译示例
         _buildSectionCard(
-          l10n.settings,
+          S.settings,
           AppDesignTokens.primaryColor,
-          [
-            _buildBasicTranslations(l10n),
-          ],
+          [_buildBasicTranslations()],
         ),
-        
         SizedBox(height: AppDesignTokens.spacingV16),
-        
-        // 按钮翻译示例
         _buildSectionCard(
           '按钮翻译',
           AppDesignTokens.infoColor,
-          [
-            _buildButtonTranslations(l10n),
-          ],
+          [_buildButtonTranslations()],
         ),
-        
         SizedBox(height: AppDesignTokens.spacingV16),
-        
-        // 状态提示翻译示例
         _buildSectionCard(
           '状态提示',
           AppDesignTokens.warningColor,
-          [
-            _buildStatusTranslations(l10n),
-          ],
+          [_buildStatusTranslations()],
         ),
-        
         SizedBox(height: AppDesignTokens.spacingV16),
-        
-        // 带参数的翻译示例
         _buildSectionCard(
           '带参数的翻译',
           AppDesignTokens.successColor,
-          [
-            _buildParameterizedTranslations(l10n),
-          ],
+          [_buildParameterizedTranslations()],
         ),
-        
         SizedBox(height: AppDesignTokens.spacingV16),
-        
-        // 当前语言信息
-        _buildCurrentLanguageInfo(l10n),
+        _buildCurrentLanguageInfo(),
       ],
-    );
+    ));
   }
 
   /// 构建语言选择器卡片
-  Widget _buildLanguageSelectorCard(AppLocalizations l10n) {
+  Widget _buildLanguageSelectorCard() {
     return Obx(() => AppCard(
           size: AppCardSize.large,
           backgroundColor: AppDesignTokens.primaryColor.withOpacity(0.1),
@@ -117,7 +90,7 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
                   ),
                   SizedBox(width: AppDesignTokens.spacing8),
                   Text(
-                    l10n.language,
+                    S.language,
                     style: TextStyle(
                       fontSize: AppDesignTokens.fontSize18,
                       fontWeight: AppDesignTokens.fontWeightBold,
@@ -139,7 +112,7 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
                 children: [
                   Expanded(
                     child: AppButton(
-                      text: l10n.chinese,
+                      text: S.chinese,
                       onPressed: controller.switchToChinese,
                       type: controller.isChinese
                           ? AppButtonType.primary
@@ -153,7 +126,7 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
                   SizedBox(width: AppDesignTokens.spacing12),
                   Expanded(
                     child: AppButton(
-                      text: l10n.english,
+                      text: S.english,
                       onPressed: controller.switchToEnglish,
                       type: controller.isEnglish
                           ? AppButtonType.primary
@@ -172,25 +145,25 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
   }
 
   /// 构建基本翻译示例
-  Widget _buildBasicTranslations(AppLocalizations l10n) {
+  Widget _buildBasicTranslations() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildTranslationRow('appTitle', l10n.appTitle),
-        _buildTranslationRow('welcome', l10n.welcome),
-        _buildTranslationRow('language', l10n.language),
-        _buildTranslationRow('theme', l10n.theme),
-        _buildTranslationRow('settings', l10n.settings),
+        _buildTranslationRow('appTitle', S.appTitle),
+        _buildTranslationRow('welcome', S.welcome),
+        _buildTranslationRow('language', S.language),
+        _buildTranslationRow('theme', S.theme),
+        _buildTranslationRow('settings', S.settings),
       ],
     );
   }
 
   /// 构建按钮翻译示例
-  Widget _buildButtonTranslations(AppLocalizations l10n) {
+  Widget _buildButtonTranslations() {
     return Column(
       children: [
         AppButton(
-          text: l10n.confirm,
+          text: S.confirm,
           onPressed: () {},
           type: AppButtonType.primary,
           backgroundColor: AppDesignTokens.successColor,
@@ -199,7 +172,7 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
         ),
         SizedBox(height: AppDesignTokens.spacingV8),
         AppButton(
-          text: l10n.cancel,
+          text: S.cancel,
           onPressed: () {},
           type: AppButtonType.secondary,
           backgroundColor: AppDesignTokens.textSecondary,
@@ -208,7 +181,7 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
         ),
         SizedBox(height: AppDesignTokens.spacingV8),
         AppButton(
-          text: l10n.ok,
+          text: S.ok,
           onPressed: () {},
           type: AppButtonType.primary,
           backgroundColor: AppDesignTokens.infoColor,
@@ -217,7 +190,7 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
         ),
         SizedBox(height: AppDesignTokens.spacingV8),
         AppButton(
-          text: l10n.save,
+          text: S.save,
           onPressed: () {},
           type: AppButtonType.primary,
           backgroundColor: AppDesignTokens.warningColor,
@@ -229,7 +202,7 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
           children: [
             Expanded(
               child: AppButton(
-                text: l10n.edit,
+                text: S.edit,
                 onPressed: () {},
                 type: AppButtonType.primary,
                 backgroundColor: AppDesignTokens.secondaryColor,
@@ -239,7 +212,7 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
             SizedBox(width: AppDesignTokens.spacing8),
             Expanded(
               child: AppButton(
-                text: l10n.delete,
+                text: S.delete,
                 onPressed: () {},
                 type: AppButtonType.primary,
                 backgroundColor: AppDesignTokens.errorColor,
@@ -253,15 +226,15 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
   }
 
   /// 构建状态翻译示例
-  Widget _buildStatusTranslations(AppLocalizations l10n) {
+  Widget _buildStatusTranslations() {
     return Column(
       children: [
-        _buildStatusItem(Icons.hourglass_empty, l10n.loading, AppDesignTokens.infoColor),
-        _buildStatusItem(Icons.inbox, l10n.noData, AppDesignTokens.textSecondary),
-        _buildStatusItem(Icons.wifi_off, l10n.networkError, AppDesignTokens.errorColor),
-        _buildStatusItem(Icons.check_circle, l10n.operationSuccess, AppDesignTokens.successColor),
-        _buildStatusItem(Icons.error, l10n.operationFailed, AppDesignTokens.errorColor),
-        _buildStatusItem(Icons.refresh, l10n.pleaseRetry, AppDesignTokens.warningColor),
+        _buildStatusItem(Icons.hourglass_empty, S.loading, AppDesignTokens.infoColor),
+        _buildStatusItem(Icons.inbox, S.noData, AppDesignTokens.textSecondary),
+        _buildStatusItem(Icons.wifi_off, S.networkError, AppDesignTokens.errorColor),
+        _buildStatusItem(Icons.check_circle, S.operationSuccess, AppDesignTokens.successColor),
+        _buildStatusItem(Icons.error, S.operationFailed, AppDesignTokens.errorColor),
+        _buildStatusItem(Icons.refresh, S.pleaseRetry, AppDesignTokens.warningColor),
       ],
     );
   }
@@ -295,7 +268,7 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
   }
 
   /// 构建带参数的翻译示例
-  Widget _buildParameterizedTranslations(AppLocalizations l10n) {
+  Widget _buildParameterizedTranslations() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -320,7 +293,7 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
               ),
               SizedBox(height: AppDesignTokens.spacingV8),
               Text(
-                l10n.hello('张三'),
+                S.hello('张三'),
                 style: TextStyle(
                   fontSize: AppDesignTokens.fontSize14,
                   color: AppDesignTokens.textPrimary,
@@ -328,7 +301,7 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
               ),
               SizedBox(height: AppDesignTokens.spacingV4),
               Text(
-                l10n.hello('John'),
+                S.hello('John'),
                 style: TextStyle(
                   fontSize: AppDesignTokens.fontSize14,
                   color: AppDesignTokens.textPrimary,
@@ -342,7 +315,7 @@ class I18nDemoPage extends BaseScrollPage<I18nDemoController> {
   }
 
   /// 构建当前语言信息
-  Widget _buildCurrentLanguageInfo(AppLocalizations l10n) {
+  Widget _buildCurrentLanguageInfo() {
     return Obx(() => AppCard(
           size: AppCardSize.medium,
           backgroundColor: AppDesignTokens.infoColor.withOpacity(0.1),
