@@ -44,6 +44,12 @@ class HomeController extends BaseController {
       description: '线性、网格、瀑布流三种布局样式动态切换',
     ),
     DemoItem(
+      title: '多分类数据视图',
+      route: Routes.MULTI_CATEGORY_VIEW,
+      icon: '📑',
+      description: '顶部主分类 Tab，每个 Tab 对应不同内容界面',
+    ),
+    DemoItem(
       title: '选择器 UI 组件',
       route: Routes.SELECTOR_DEMO,
       icon: '✅',

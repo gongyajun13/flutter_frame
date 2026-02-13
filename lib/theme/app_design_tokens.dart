@@ -71,11 +71,13 @@ class AppDesignTokens {
   /// 背景色（从当前主题获取，如果主题不可用则使用默认值）
   static Color get backgroundColor => _currentTheme?.backgroundColor ?? const Color(0xFFF5F5F5);
   static Color get surfaceColor => _currentTheme?.surfaceColor ?? Colors.white;
+  static Color get surfaceVariantColor => _currentTheme?.surfaceColor ?? const Color(0xFFF5F5F5);
   static Color get cardColor => _currentTheme?.surfaceColor ?? Colors.white;
 
   /// 文字颜色（从当前主题获取，如果主题不可用则使用默认值）
   static Color get textPrimary => _currentTheme?.textColor ?? const Color(0xFF212121);
   static Color get textSecondary => _currentTheme?.textColor.withOpacity(0.7) ?? const Color(0xFF757575);
+  static Color get textTertiary => _currentTheme?.textColor.withOpacity(0.5) ?? const Color(0xFF9E9E9E);
   static Color get textDisabled => _currentTheme?.textColor.withOpacity(0.4) ?? const Color(0xFFBDBDBD);
   static Color get textHint => _currentTheme?.textColor.withOpacity(0.6) ?? const Color(0xFF9E9E9E);
 

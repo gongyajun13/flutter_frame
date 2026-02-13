@@ -37,6 +37,8 @@ import '../../pages/file_download_demo/file_download_demo_page.dart';
 import '../../pages/file_download_demo/file_download_demo_binding.dart';
 import '../../pages/i18n_demo/i18n_demo_page.dart';
 import '../../pages/i18n_demo/i18n_demo_binding.dart';
+import '../../pages/multi_category_view/multi_category_view_page.dart';
+import '../../pages/multi_category_view/multi_category_view_binding.dart';
 import '../../app/widgets/theme_selector_widget.dart';
 
 part 'app_routes.dart';
@@ -185,6 +187,13 @@ class AppPages {
       name: _Paths.I18N_DEMO,
       page: () => const I18nDemoPage(),
       binding: I18nDemoBinding(),
+    ),
+
+    // 多分类数据视图
+    GetPage(
+      name: _Paths.MULTI_CATEGORY_VIEW,
+      page: () => const MultiCategoryViewPage(),
+      binding: MultiCategoryViewBinding(),
     ),
 
   ];
