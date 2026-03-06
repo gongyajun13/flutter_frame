@@ -45,13 +45,10 @@ class VideoPlayerDemoPage extends BaseScrollPage<VideoPlayerDemoController> {
         SizedBox(height: AppDesignTokens.spacingV16),
         
         // 控制按钮组
-        _buildControlButtons(),
         SizedBox(height: AppDesignTokens.spacingV24),
-        
-        // 小播放器示例
-        _buildSmallPlayer(),
-        SizedBox(height: AppDesignTokens.spacingV24),
-        
+
+
+
         // 功能说明
         _buildFeaturesCard(),
       ],
@@ -166,64 +163,6 @@ class VideoPlayerDemoPage extends BaseScrollPage<VideoPlayerDemoController> {
         ],
       ),
     ));
-  }
-
-  /// 构建控制按钮组
-  Widget _buildControlButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        AppButton.primary(
-          text: '功能说明',
-          onPressed: controller.showFeaturesDialog,
-          icon: Icons.info_outline,
-        ),
-        AppButton.primary(
-          text: '全屏播放',
-          onPressed: controller.openFullscreenPlayer,
-          icon: Icons.fullscreen,
-        ),
-      ],
-    );
-  }
-
-  /// 构建小播放器
-  Widget _buildSmallPlayer() {
-    return AppCard(
-      size: AppCardSize.large,
-      showShadow: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(AppDesignTokens.radius12),
-              topRight: Radius.circular(AppDesignTokens.radius12),
-            ),
-            child: Container(
-              width: double.infinity,
-              height: 150.h,
-              child: CachedVideoPlayerWidget(
-              videoUrl: controller.videoUrl,
-              autoPlay: false,
-              showControls: true,
-              showProgressBar: true,
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(AppDesignTokens.spacing12),
-            child: Text(
-              '小播放器 - 无封面图',
-              style: TextStyle(
-                fontSize: AppDesignTokens.fontSize14,
-                color: AppDesignTokens.textSecondary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   /// 构建功能说明卡片
