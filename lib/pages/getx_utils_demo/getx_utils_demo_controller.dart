@@ -3,8 +3,7 @@ import 'package:get/get.dart';
 import '../../base/base_controller.dart';
 import '../../utils/app_update_util.dart';
 import '../../app/routes/app_pages.dart';
-import '../../utils/getx_dialog_util.dart';
-import '../../utils/getx_snackbar_util.dart';
+import '../../overlay/overlay.dart';
 
 /// GetX工具演示控制器
 class GetXUtilsDemoController extends BaseController {
@@ -27,68 +26,68 @@ class GetXUtilsDemoController extends BaseController {
         duration: const Duration(seconds: 2),
       ),
     ];
-    SnackBarUtil.showMultiple(configs);
+    AppOverlay.snack.showMultiple(configs);
   }
 
   /// 显示Loading对话框
   void showLoadingDialog() {
-    DialogUtil.showLoading(
+    AppOverlay.dialog.showLoading(
       message: '正在加载中...',
     );
     
     // 3秒后自动关闭
     Future.delayed(const Duration(seconds: 3), () {
-      DialogUtil.hideLoading();
-      SnackBarUtil.success(message: '加载完成！');
+      AppOverlay.dialog.hideLoading();
+      AppOverlay.snack.success(message: '加载完成！');
     });
   }
 
   /// 显示确认对话框
   void showConfirmDialog() {
-    DialogUtil.showConfirm(
+    AppOverlay.dialog.showConfirm(
       title: '确认删除',
       message: '确定要删除这个项目吗？此操作不可撤销。',
       confirmText: '删除',
       cancelText: '取消',
       confirmColor: const Color(0xFFD32F2F),
       onConfirm: () {
-        SnackBarUtil.success(message: '删除成功！');
+        AppOverlay.snack.success(message: '删除成功！');
       },
       onCancel: () {
-        SnackBarUtil.info(message: '已取消删除');
+        AppOverlay.snack.info(message: '已取消删除');
       },
     );
   }
 
   /// 显示警告对话框
   void showAlertDialog() {
-    DialogUtil.showAlert(
+    AppOverlay.dialog.showAlert(
       title: '网络异常',
       message: '网络连接异常，请检查网络设置后重试。',
       buttonText: '我知道了',
       buttonColor: const Color(0xFFF57C00),
       onPressed: () {
-        SnackBarUtil.info(message: '已确认网络异常');
+        AppOverlay.snack.info(message: '已确认网络异常');
       },
     );
   }
 
   /// 显示输入对话框
   void showInputDialog() {
-    DialogUtil.showInput(
+    AppOverlay.dialog.showInput(
       title: '输入用户名',
       hintText: '请输入用户名',
       confirmText: '确认',
       cancelText: '取消',
       onConfirm: (value) {
         if (value.isNotEmpty) {
-          SnackBarUtil.success(message: '用户名：$value');
+          AppOverlay.snack.success(message: '用户名：$value');
         } else {
-          SnackBarUtil.warning(message: '用户名不能为空');
+          AppOverlay.snack.warning(message: '用户名不能为空');
         }
       },
       onCancel: () {
-        SnackBarUtil.info(message: '已取消输入');
+        AppOverlay.snack.info(message: '已取消输入');
       },
     );
   }
@@ -96,21 +95,21 @@ class GetXUtilsDemoController extends BaseController {
   /// 显示选择对话框
   void showSelectDialog() {
     final options = ['选项一', '选项二', '选项三', '选项四', '选项五'];
-    DialogUtil.showSelect(
+    AppOverlay.dialog.showSelect(
       title: '请选择',
       options: options,
       onSelected: (index, option) {
-        SnackBarUtil.success(message: '选择了：$option');
+        AppOverlay.snack.success(message: '选择了：$option');
       },
       onCancel: () {
-        SnackBarUtil.info(message: '已取消选择');
+        AppOverlay.snack.info(message: '已取消选择');
       },
     );
   }
 
   /// 显示底部弹窗
   void showBottomSheet() {
-    DialogUtil.showBottomSheet(
+    AppOverlay.sheet.show(
       child: Container(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -149,7 +148,7 @@ class GetXUtilsDemoController extends BaseController {
               child: ElevatedButton(
                 onPressed: () {
                   Get.back();
-                  SnackBarUtil.success(message: '底部弹窗操作完成');
+                  AppOverlay.snack.success(message: '底部弹窗操作完成');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1976D2),
@@ -177,35 +176,35 @@ class GetXUtilsDemoController extends BaseController {
   /// 模拟网络请求
   void simulateNetworkRequest() {
     // 显示Loading
-    DialogUtil.showLoading(message: '正在请求数据...');
+    AppOverlay.dialog.showLoading(message: '正在请求数据...');
     
     // 模拟网络请求
     Future.delayed(const Duration(seconds: 2), () {
-      DialogUtil.hideLoading();
+      AppOverlay.dialog.hideLoading();
       
       // 模拟请求结果
       final success = DateTime.now().millisecond % 2 == 0;
       if (success) {
-        SnackBarUtil.success(message: '数据加载成功！');
+        AppOverlay.snack.success(message: '数据加载成功！');
       } else {
-        SnackBarUtil.error(message: '网络请求失败，请重试');
+        AppOverlay.snack.error(message: '网络请求失败，请重试');
       }
     });
   }
 
   /// 模拟表单验证
   void simulateFormValidation() {
-    DialogUtil.showInput(
+    AppOverlay.dialog.showInput(
       title: '表单验证',
       hintText: '请输入邮箱地址',
       keyboardType: TextInputType.emailAddress,
       onConfirm: (value) {
         if (value.isEmpty) {
-          SnackBarUtil.warning(message: '邮箱地址不能为空');
+          AppOverlay.snack.warning(message: '邮箱地址不能为空');
         } else if (!value.contains('@')) {
-          SnackBarUtil.error(message: '请输入有效的邮箱地址');
+          AppOverlay.snack.error(message: '请输入有效的邮箱地址');
         } else {
-          SnackBarUtil.success(message: '邮箱地址验证通过');
+          AppOverlay.snack.success(message: '邮箱地址验证通过');
         }
       },
     );
@@ -213,7 +212,7 @@ class GetXUtilsDemoController extends BaseController {
 
   /// 模拟批量操作
   void simulateBatchOperation() {
-    DialogUtil.showConfirm(
+    AppOverlay.dialog.showConfirm(
       title: '批量删除',
       message: '确定要删除选中的 5 个项目吗？',
       confirmText: '删除',
@@ -221,16 +220,16 @@ class GetXUtilsDemoController extends BaseController {
       confirmColor: const Color(0xFFD32F2F),
       onConfirm: () {
         // 显示Loading
-        DialogUtil.showLoading(message: '正在删除...');
+        AppOverlay.dialog.showLoading(message: '正在删除...');
         
         // 模拟批量删除
         Future.delayed(const Duration(seconds: 2), () {
-          DialogUtil.hideLoading();
-          SnackBarUtil.success(message: '已成功删除 5 个项目');
+          AppOverlay.dialog.hideLoading();
+          AppOverlay.snack.success(message: '已成功删除 5 个项目');
         });
       },
       onCancel: () {
-        SnackBarUtil.info(message: '已取消批量删除');
+        AppOverlay.snack.info(message: '已取消批量删除');
       },
     );
   }
@@ -238,32 +237,32 @@ class GetXUtilsDemoController extends BaseController {
   /// 测试SnackBar覆盖功能
   void testSnackBarOverride() {
     // 显示第一条消息
-    SnackBarUtil.info(message: '第一条消息 - 这条应该被覆盖');
+    AppOverlay.snack.info(message: '第一条消息 - 这条应该被覆盖');
     
     // 1秒后显示第二条消息，应该覆盖第一条
     Future.delayed(const Duration(seconds: 1), () {
-      SnackBarUtil.success(message: '第二条消息 - 这条应该覆盖第一条');
+      AppOverlay.snack.success(message: '第二条消息 - 这条应该覆盖第一条');
     });
     
     // 2秒后显示第三条消息，应该覆盖第二条
     Future.delayed(const Duration(seconds: 2), () {
-      SnackBarUtil.error(message: '第三条消息 - 这条应该覆盖第二条');
+      AppOverlay.snack.error(message: '第三条消息 - 这条应该覆盖第二条');
     });
     
     // 3秒后显示第四条消息，应该覆盖第三条
     Future.delayed(const Duration(seconds: 3), () {
-      SnackBarUtil.warning(message: '第四条消息 - 这条应该覆盖第三条');
+      AppOverlay.snack.warning(message: '第四条消息 - 这条应该覆盖第三条');
     });
   }
 
   /// 测试立即显示SnackBar功能
   void testImmediateSnackBar() {
     // 显示第一个SnackBar
-    SnackBarUtil.success(message: '第一个提示消息');
+    AppOverlay.snack.success(message: '第一个提示消息');
     
     // 使用立即显示方法，强制替换当前显示的
     Future.delayed(const Duration(milliseconds: 500), () {
-      SnackBarUtil.showImmediate(
+      AppOverlay.snack.showImmediate(
         message: '立即显示的提示消息（强制替换）',
         title: '立即替换',
         type: SnackBarType.error,
@@ -272,7 +271,7 @@ class GetXUtilsDemoController extends BaseController {
     
     // 再立即显示第三个SnackBar
     Future.delayed(const Duration(milliseconds: 1000), () {
-      SnackBarUtil.showImmediate(
+      AppOverlay.snack.showImmediate(
         message: '第三个立即显示的提示消息',
         title: '再次替换',
         type: SnackBarType.warning,

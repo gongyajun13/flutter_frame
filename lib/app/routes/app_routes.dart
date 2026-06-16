@@ -14,6 +14,8 @@ abstract class Routes {
   static const URL_LAUNCHER_DEMO = _Paths.URL_LAUNCHER_DEMO;
   static const CUSTOM_DIALOG_DEMO = _Paths.CUSTOM_DIALOG_DEMO;
   static const IMAGE_UTIL_DEMO = _Paths.IMAGE_UTIL_DEMO;
+  static const PIXELIZE_DEMO = _Paths.PIXELIZE_DEMO;
+  static const PIXELIZE_RESULT = _Paths.PIXELIZE_RESULT;
   static const VIDEO_PLAYER_DEMO = _Paths.VIDEO_PLAYER_DEMO;
   static const DEEPSEEK_DEMO = _Paths.DEEPSEEK_DEMO;
   static const THEME_SELECTOR = _Paths.THEME_SELECTOR;
@@ -42,6 +44,8 @@ abstract class _Paths {
   static const URL_LAUNCHER_DEMO = '/url-launcher-demo';
   static const CUSTOM_DIALOG_DEMO = '/custom-dialog-demo';
   static const IMAGE_UTIL_DEMO = '/image-util-demo';
+  static const PIXELIZE_DEMO = '/pixelize-demo';
+  static const PIXELIZE_RESULT = '/pixelize-result';
   static const VIDEO_PLAYER_DEMO = '/video-player-demo';
   static const DEEPSEEK_DEMO = '/deepseek-demo';
   static const THEME_SELECTOR = '/theme-selector';

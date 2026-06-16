@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -263,7 +265,7 @@ class SelectorDemoPage extends BaseScrollPage<SelectorDemoController> {
           ),
           SizedBox(height: AppDesignTokens.spacingV12),
           Text(
-            '使用 HSV 色盘和透明度滑块选择颜色，支持实时预览和颜色值显示。',
+            '使用圆形色盘选择色相与饱和度，配合亮度、透明度滑块实时预览。',
             style: TextStyle(
               fontSize: AppDesignTokens.fontSize13,
               color: AppDesignTokens.textSecondary,
@@ -353,6 +355,40 @@ class SelectorDemoPage extends BaseScrollPage<SelectorDemoController> {
     final luminance = color.computeLuminance();
     // 如果亮度大于 0.5，返回黑色，否则返回白色
     return luminance > 0.5 ? Colors.black : Colors.white;
+  }
+
+  /// 颜色选择器滑块行
+  Widget _buildColorSliderRow({
+    required String label,
+    required String trailing,
+    required Widget child,
+  }) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 52,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: AppDesignTokens.fontSize14,
+              color: AppDesignTokens.textSecondary,
+            ),
+          ),
+        ),
+        Expanded(child: child),
+        SizedBox(
+          width: 44,
+          child: Text(
+            trailing,
+            style: TextStyle(
+              fontSize: AppDesignTokens.fontSize14,
+              color: AppDesignTokens.textSecondary,
+            ),
+            textAlign: TextAlign.right,
+          ),
+        ),
+      ],
+    );
   }
 
   /// 文件选择区域
@@ -1402,169 +1438,85 @@ class SelectorDemoPage extends BaseScrollPage<SelectorDemoController> {
                         ],
                       ),
                     ),
-                    // HSV 色盘
+                    // 圆形色盘 + 亮度 / 透明度
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: AppDesignTokens.spacing16,
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // 色相和饱和度选择器
-                          Container(
-                            height: 200,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(AppDesignTokens.radius8),
-                              border: Border.all(
-                                color: AppDesignTokens.textSecondary.withOpacity(0.2),
-                                width: 1,
-                              ),
+                          Text(
+                            '拖动色盘选色：环上为不同色相，越靠外颜色越鲜艳',
+                            style: TextStyle(
+                              fontSize: AppDesignTokens.fontSize12,
+                              color: AppDesignTokens.textSecondary,
+                              height: AppDesignTokens.lineHeightNormal,
                             ),
-                            child: GestureDetector(
-                              onPanUpdate: (details) {
-                                final RenderBox? box = context.findRenderObject() as RenderBox?;
-                                if (box == null) return;
-                                final localPosition = box.globalToLocal(details.globalPosition);
-                                final width = box.size.width;
-                                final height = box.size.height;
-
-                                final saturation = (localPosition.dx / width).clamp(0.0, 1.0);
-                                final value = 1.0 - (localPosition.dy / height).clamp(0.0, 1.0);
-
-                                setState(() {
-                                  hsvColor = HSVColor.fromAHSV(
-                                    hsvColor.alpha,
-                                    hsvColor.hue,
-                                    saturation,
-                                    value,
-                                  );
-                                });
-                              },
-                              onTapDown: (details) {
-                                final RenderBox? box = context.findRenderObject() as RenderBox?;
-                                if (box == null) return;
-                                final localPosition = box.globalToLocal(details.localPosition);
-                                final width = box.size.width;
-                                final height = box.size.height;
-
-                                final saturation = (localPosition.dx / width).clamp(0.0, 1.0);
-                                final value = 1.0 - (localPosition.dy / height).clamp(0.0, 1.0);
-
-                                setState(() {
-                                  hsvColor = HSVColor.fromAHSV(
-                                    hsvColor.alpha,
-                                    hsvColor.hue,
-                                    saturation,
-                                    value,
-                                  );
-                                });
-                              },
-                              child: CustomPaint(
-                                painter: _ColorPickerPainter(hsvColor),
-                                child: Stack(
-                                  children: [
-                                    // 选择指示器
-                                    Positioned(
-                                      left: hsvColor.saturation * 200 - 8,
-                                      top: (1.0 - hsvColor.value) * 200 - 8,
-                                      child: Container(
-                                        width: 16,
-                                        height: 16,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: Colors.white,
-                                            width: 2,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.3),
-                                              blurRadius: 4,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: AppDesignTokens.spacingV16),
-                          // 色相滑块
-                          Row(
-                            children: [
-                              Text(
-                                '色相',
-                                style: TextStyle(
-                                  fontSize: AppDesignTokens.fontSize14,
-                                  color: AppDesignTokens.textSecondary,
-                                ),
-                              ),
-                              SizedBox(width: AppDesignTokens.spacing8),
-                              Expanded(
-                                child: Slider(
-                                  value: hsvColor.hue,
-                                  min: 0.0,
-                                  max: 360.0,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      hsvColor = HSVColor.fromAHSV(
-                                        hsvColor.alpha,
-                                        value,
-                                        hsvColor.saturation,
-                                        hsvColor.value,
-                                      );
-                                    });
-                                  },
-                                  activeColor: currentColor,
-                                ),
-                              ),
-                            ],
+                            textAlign: TextAlign.center,
                           ),
                           SizedBox(height: AppDesignTokens.spacingV12),
-                          // 透明度滑块
-                          Row(
-                            children: [
-                              Text(
-                                '透明度',
-                                style: TextStyle(
-                                  fontSize: AppDesignTokens.fontSize14,
-                                  color: AppDesignTokens.textSecondary,
-                                ),
+                          Center(
+                            child: _SelectorColorWheel(
+                              hsvColor: hsvColor,
+                              onChanged: (value) {
+                                setState(() {
+                                  hsvColor = value;
+                                });
+                              },
+                            ),
+                          ),
+                          SizedBox(height: AppDesignTokens.spacingV20),
+                          _buildColorSliderRow(
+                            label: '亮度',
+                            trailing: '${(hsvColor.value * 100).round()}%',
+                            child: SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                trackHeight: 4,
                               ),
-                              SizedBox(width: AppDesignTokens.spacing8),
-                              Expanded(
-                                child: Slider(
-                                  value: hsvColor.alpha,
-                                  min: 0.0,
-                                  max: 1.0,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      hsvColor = HSVColor.fromAHSV(
-                                        value,
-                                        hsvColor.hue,
-                                        hsvColor.saturation,
-                                        hsvColor.value,
-                                      );
-                                    });
-                                  },
-                                  activeColor: currentColor,
-                                ),
+                              child: Slider(
+                                value: hsvColor.value,
+                                min: 0.0,
+                                max: 1.0,
+                                activeColor: currentColor,
+                                onChanged: (value) {
+                                  setState(() {
+                                    hsvColor = HSVColor.fromAHSV(
+                                      hsvColor.alpha,
+                                      hsvColor.hue,
+                                      hsvColor.saturation,
+                                      value,
+                                    );
+                                  });
+                                },
                               ),
-                              SizedBox(width: AppDesignTokens.spacing8),
-                              SizedBox(
-                                width: 40,
-                                child: Text(
-                                  '${(hsvColor.alpha * 100).toInt()}%',
-                                  style: TextStyle(
-                                    fontSize: AppDesignTokens.fontSize14,
-                                    color: AppDesignTokens.textSecondary,
-                                  ),
-                                  textAlign: TextAlign.right,
-                                ),
+                            ),
+                          ),
+                          SizedBox(height: AppDesignTokens.spacingV12),
+                          _buildColorSliderRow(
+                            label: '透明度',
+                            trailing: '${(hsvColor.alpha * 100).round()}%',
+                            child: SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                trackHeight: 4,
                               ),
-                            ],
+                              child: Slider(
+                                value: hsvColor.alpha,
+                                min: 0.0,
+                                max: 1.0,
+                                activeColor: currentColor,
+                                onChanged: (value) {
+                                  setState(() {
+                                    hsvColor = HSVColor.fromAHSV(
+                                      value,
+                                      hsvColor.hue,
+                                      hsvColor.saturation,
+                                      hsvColor.value,
+                                    );
+                                  });
+                                },
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -1581,43 +1533,157 @@ class SelectorDemoPage extends BaseScrollPage<SelectorDemoController> {
   }
 }
 
-/// 颜色选择器画布
-class _ColorPickerPainter extends CustomPainter {
-  final HSVColor hsvColor;
+/// 圆形色相-饱和度色盘
+class _SelectorColorWheel extends StatelessWidget {
+  static const double wheelSize = 240;
+  static const double indicatorSize = 22;
+  static const double edgeInset = 6;
 
-  _ColorPickerPainter(this.hsvColor);
+  final HSVColor hsvColor;
+  final ValueChanged<HSVColor> onChanged;
+
+  const _SelectorColorWheel({
+    required this.hsvColor,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final maxRadius = wheelSize / 2 - edgeInset;
+    final indicatorRadius = maxRadius * hsvColor.saturation;
+    final angleRad = (hsvColor.hue / 180.0) * math.pi - math.pi / 2;
+    final center = wheelSize / 2;
+    final indicatorLeft = center + indicatorRadius * math.cos(angleRad) - indicatorSize / 2;
+    final indicatorTop = center + indicatorRadius * math.sin(angleRad) - indicatorSize / 2;
+    final selectedColor = hsvColor.toColor();
+
+    return Container(
+      width: wheelSize + 16,
+      height: wheelSize + 16,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Center(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onPanStart: (details) => _updateFromPosition(details.localPosition),
+          onPanUpdate: (details) => _updateFromPosition(details.localPosition),
+          onTapDown: (details) => _updateFromPosition(details.localPosition),
+          child: SizedBox(
+            width: wheelSize,
+            height: wheelSize,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                CustomPaint(
+                  painter: _HueSaturationWheelPainter(),
+                  size: const Size(wheelSize, wheelSize),
+                ),
+                Positioned(
+                  left: indicatorLeft,
+                  top: indicatorTop,
+                  child: Container(
+                    width: indicatorSize,
+                    height: indicatorSize,
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.25),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: selectedColor,
+                        border: Border.all(
+                          color: Colors.black.withOpacity(0.08),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _updateFromPosition(Offset localPos) {
+    final center = Offset(wheelSize / 2, wheelSize / 2);
+    final dx = localPos.dx - center.dx;
+    final dy = localPos.dy - center.dy;
+    final distance = math.sqrt(dx * dx + dy * dy);
+    final maxRadius = wheelSize / 2 - edgeInset;
+
+    if (distance > maxRadius) return;
+
+    var angle = math.atan2(dy, dx) + math.pi / 2;
+    if (angle < 0) angle += 2 * math.pi;
+
+    final hue = (angle * 180.0 / math.pi) % 360.0;
+    final saturation = (distance / maxRadius).clamp(0.0, 1.0);
+
+    onChanged(
+      HSVColor.fromAHSV(
+        hsvColor.alpha,
+        hue,
+        saturation,
+        hsvColor.value,
+      ),
+    );
+  }
+}
+
+/// HSV 圆形色盘绘制器：中心白 → 边缘纯色，环向为色相
+class _HueSaturationWheelPainter extends CustomPainter {
+  static const int _segmentCount = 180;
 
   @override
   void paint(Canvas canvas, Size size) {
-    // 使用更高效的方法绘制色盘
-    // 按列绘制，减少绘制次数
-    const step = 2.0; // 每2像素绘制一次，提高性能
-    for (double x = 0; x < size.width; x += step) {
-      for (double y = 0; y < size.height; y += step) {
-        final saturation = (x / size.width).clamp(0.0, 1.0);
-        final value = (1.0 - (y / size.height)).clamp(0.0, 1.0);
-        final color = HSVColor.fromAHSV(
-          hsvColor.alpha,
-          hsvColor.hue,
-          saturation,
-          value,
-        ).toColor();
-        final paint = Paint()..color = color;
-        canvas.drawRect(
-          Rect.fromLTWH(x, y, step, step),
-          paint,
-        );
-      }
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) / 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    for (int i = 0; i < _segmentCount; i++) {
+      final startAngle = (i / _segmentCount) * 2 * math.pi - math.pi / 2;
+      final sweepAngle = 2 * math.pi / _segmentCount;
+      final hue = (i / _segmentCount) * 360.0;
+      final edgeColor = _selectorHsvToColor(hue, 1.0, 1.0);
+
+      final path = Path()
+        ..moveTo(center.dx, center.dy)
+        ..arcTo(rect, startAngle, sweepAngle, false)
+        ..close();
+
+      final paint = Paint()
+        ..shader = RadialGradient(
+          colors: [const Color(0xFFFFFFFF), edgeColor],
+        ).createShader(rect);
+
+      canvas.drawPath(path, paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    if (oldDelegate is _ColorPickerPainter) {
-      return oldDelegate.hsvColor.hue != hsvColor.hue ||
-          oldDelegate.hsvColor.alpha != hsvColor.alpha;
-    }
-    return true;
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+Color _selectorHsvToColor(double h, double s, double v) {
+  return HSVColor.fromAHSV(1.0, h, s, v).toColor();
 }
 

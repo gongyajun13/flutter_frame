@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../../utils/getx_dialog_util.dart';
+import '../../overlay/overlay.dart';
 
 class CustomDialogDemoPage extends StatelessWidget {
   const CustomDialogDemoPage({Key? key}) : super(key: key);
@@ -164,7 +164,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 简单自定义对话框
   void _showSimpleCustomDialog() {
-    DialogUtil.showCustom(
+    AppOverlay.dialog.showCustom(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -198,7 +198,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 带标题的自定义对话框
   void _showCustomWithTitleDialog() {
-    DialogUtil.showCustomWithTitle(
+    AppOverlay.dialog.showCustomWithTitle(
       title: '系统提示',
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -233,7 +233,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 带按钮的自定义对话框
   void _showCustomWithButtonsDialog() {
-    DialogUtil.showCustomWithButtons(
+    AppOverlay.dialog.showCustomWithButtons(
       title: '确认操作',
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -264,11 +264,11 @@ class CustomDialogDemoPage extends StatelessWidget {
         ],
       ),
       buttons: [
-        DialogUtil.buildCancelButton(
+        AppOverlay.dialog.buildCancelButton(
           text: '取消',
           onPressed: () => print('取消操作'),
         ),
-        DialogUtil.buildConfirmButton(
+        AppOverlay.dialog.buildConfirmButton(
           text: '确定',
           onPressed: () => print('确认操作'),
         ),
@@ -278,7 +278,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 全屏自定义对话框
   void _showFullScreenDialog() {
-    DialogUtil.showCustomFullScreen(
+    AppOverlay.dialog.showCustomFullScreen(
       title: '全屏对话框',
       child: Container(
         color: Colors.blue.shade50,
@@ -320,7 +320,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 带图标的对话框
   void _showIconDialog() {
-    DialogUtil.showCustomWithTitle(
+    AppOverlay.dialog.showCustomWithTitle(
       title: '成功',
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -365,7 +365,7 @@ class CustomDialogDemoPage extends StatelessWidget {
     final TextEditingController nameController = TextEditingController();
     final TextEditingController emailController = TextEditingController();
     
-    DialogUtil.showCustomWithButtons(
+    AppOverlay.dialog.showCustomWithButtons(
       title: '用户信息',
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -392,11 +392,11 @@ class CustomDialogDemoPage extends StatelessWidget {
         ],
       ),
       buttons: [
-        DialogUtil.buildCancelButton(
+        AppOverlay.dialog.buildCancelButton(
           text: '取消',
           onPressed: () => print('取消表单'),
         ),
-        DialogUtil.buildConfirmButton(
+        AppOverlay.dialog.buildConfirmButton(
           text: '保存',
           onPressed: () {
             print('保存用户信息: ${nameController.text}, ${emailController.text}');
@@ -416,7 +416,7 @@ class CustomDialogDemoPage extends StatelessWidget {
       '选项 5',
     ];
     
-    DialogUtil.showCustomWithTitle(
+    AppOverlay.dialog.showCustomWithTitle(
       title: '选择选项',
       child: Container(
         height: 200.h,
@@ -439,7 +439,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 图片预览对话框
   void _showImagePreviewDialog() {
-    DialogUtil.showCustom(
+    AppOverlay.dialog.showCustom(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -479,7 +479,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 渐变背景对话框
   void _showGradientDialog() {
-    DialogUtil.showCustom(
+    AppOverlay.dialog.showCustom(
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -525,7 +525,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 毛玻璃效果对话框
   void _showBlurDialog() {
-    DialogUtil.showCustom(
+    AppOverlay.dialog.showCustom(
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.1),
@@ -571,7 +571,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 动画效果对话框
   void _showAnimatedDialog() {
-    DialogUtil.showCustom(
+    AppOverlay.dialog.showCustom(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -615,7 +615,7 @@ class CustomDialogDemoPage extends StatelessWidget {
 
   // 自定义关闭按钮
   void _showCustomCloseDialog() {
-    DialogUtil.showCustom(
+    AppOverlay.dialog.showCustom(
       title: '自定义关闭',
       showCloseButton: false,
       child: Column(
@@ -647,12 +647,12 @@ class CustomDialogDemoPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              DialogUtil.buildSecondaryButton(
+              AppOverlay.dialog.buildSecondaryButton(
                 text: '稍后再说',
                 onPressed: () => print('稍后再说'),
                 icon: Icons.schedule,
               ),
-              DialogUtil.buildPrimaryButton(
+              AppOverlay.dialog.buildPrimaryButton(
                 text: '立即设置',
                 onPressed: () => print('立即设置'),
                 icon: Icons.settings,

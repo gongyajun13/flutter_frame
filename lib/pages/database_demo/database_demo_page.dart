@@ -4,6 +4,7 @@ import '../../base/base_page.dart';
 import '../../theme/app_design_tokens.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_card.dart';
+import '../../overlay/overlay.dart';
 import 'database_demo_controller.dart';
 import '../../database/models/user_table_model.dart';
 import '../../database/models/product_table_model.dart';
@@ -227,42 +228,21 @@ class DatabaseDemoPage extends BasePage<DatabaseDemoController> {
   }
 
   /// 显示批量添加对话框
-  void _showBatchAddDialog(bool isUsers) {
-    final countController = TextEditingController(text: '10');
-    Get.dialog(
-      AlertDialog(
-        title: Text('批量添加${isUsers ? '用户' : '产品'}'),
-        content: TextField(
-          controller: countController,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            labelText: '数量',
-            hintText: '请输入要添加的数量',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDesignTokens.radius8),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('取消'),
-          ),
-          TextButton(
-            onPressed: () {
-              final count = int.tryParse(countController.text) ?? 10;
-              if (isUsers) {
-                controller.batchAddUsers(count);
-              } else {
-                controller.batchAddProducts(count);
-              }
-              Get.back();
-            },
-            child: Text('确定'),
-          ),
-        ],
-      ),
+  Future<void> _showBatchAddDialog(bool isUsers) async {
+    final value = await AppOverlay.dialog.inputAsync(
+      title: '批量添加${isUsers ? '用户' : '产品'}',
+      hintText: '请输入要添加的数量',
+      initialValue: '10',
+      keyboardType: TextInputType.number,
     );
+    if (value == null) return;
+
+    final count = int.tryParse(value) ?? 10;
+    if (isUsers) {
+      controller.batchAddUsers(count);
+    } else {
+      controller.batchAddProducts(count);
+    }
   }
 
   /// 构建用户列表

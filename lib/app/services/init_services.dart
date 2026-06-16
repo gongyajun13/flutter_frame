@@ -6,6 +6,7 @@ import '../config/environment_config.dart';
 import '../../utils/error_monitor_service.dart';
 import '../../utils/local_cache_util.dart';
 import '../../utils/performance_monitor.dart';
+import '../../overlay/overlay_init.dart';
 import '../controllers/theme_controller.dart';
 import '../services/theme_service.dart';
 import '../controllers/locale_controller.dart';
@@ -53,7 +54,10 @@ class InitServices {
       localeController.currentLocale.value = savedLocale;
     }
 
-    // 9. 初始化性能监控（开发/测试环境默认启用；也可在面板内开关控制）
+    // 9. 初始化全局浮层样式（依赖主题控制器）
+    initAppOverlay();
+
+    // 10. 初始化性能监控（开发/测试环境默认启用；也可在面板内开关控制）
     if (envConfig.enableConsoleLog) {
       PerformanceMonitor.instance.start();
     }

@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:flutter/material.dart';
+import '../../overlay/overlay.dart';
 import '../models/api_response.dart';
 import '../services/network_service.dart';
 
@@ -144,75 +144,28 @@ abstract class BaseNetworkRequest<T> {
   /// 显示loading
   void _showLoading() {
     if (showLoading) {
-      Get.dialog(
-        Center(
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text(loadingText),
-              ],
-            ),
-          ),
-        ),
-        barrierDismissible: false,
-      );
+      AppOverlay.dialog.showLoading(message: loadingText);
     }
   }
   
   /// 隐藏loading
-  /// 只关闭 dialog，不影响页面
   void _hideLoading() {
-    if (showLoading && Get.isDialogOpen == true) {
-      try {
-        Get.back();
-      } catch (e) {
-        // 如果 Get.back() 失败，尝试延迟重试
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (showLoading && Get.isDialogOpen == true) {
-            try {
-              Get.back();
-            } catch (e2) {
-              // 静默失败
-            }
-          }
-        });
-      }
+    if (showLoading) {
+      AppOverlay.dialog.hideLoading();
     }
   }
   
   /// 显示成功提示
   void _showSuccess(String message) {
     if (successText != null && successText!.isNotEmpty) {
-      Get.snackbar(
-        '成功',
-        message,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 2),
-      );
+      AppOverlay.snack.success(message: message);
     }
   }
   
   /// 显示错误提示
   void _showError(String message) {
     if (showError) {
-      Get.snackbar(
-        '错误',
-        message,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 3),
-      );
+      AppOverlay.snack.error(message: message);
     }
   }
 }

@@ -84,6 +84,12 @@ class HomeController extends BaseController {
       description: '图片选择、裁剪、压缩、上传',
     ),
     DemoItem(
+      title: '拼豆创作',
+      route: Routes.PIXELIZE_DEMO,
+      icon: '🎨',
+      description: '空白画布自由创作，或图片生成像素图',
+    ),
+    DemoItem(
       title: '视频播放器演示',
       route: Routes.VIDEO_PLAYER_DEMO,
       icon: '🎬',

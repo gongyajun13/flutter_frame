@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:photo_manager/photo_manager.dart';
+import '../../overlay/overlay.dart';
 
 /// 图片预览控制器
 class ImagePreviewController extends GetxController {
@@ -52,7 +53,7 @@ class ImagePreviewController extends GetxController {
       }
     } catch (e) {
       debugPrint('加载图片失败: $e');
-      Get.snackbar('错误', '加载图片失败');
+      AppOverlay.snack.error(message: '加载图片失败');
     } finally {
       isLoading.value = false;
     }
@@ -90,7 +91,7 @@ class ImagePreviewController extends GetxController {
         currentIndex.value = selectedAssets.length - 1;
       }
       loadCurrentImage();
-      Get.snackbar('成功', '已删除图片');
+      AppOverlay.toast.success('已删除图片');
     } else {
       Get.back();
     }

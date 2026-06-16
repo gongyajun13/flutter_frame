@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_launcher/url_launcher.dart' as ul;
 
-import '../../utils/getx_snackbar_util.dart';
+import '../../overlay/overlay.dart';
 import '../../utils/url_launcher_util.dart';
 import '../../widgets/simple_fullscreen_webview.dart';
 
@@ -351,7 +351,7 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
                   setState(() {
                     _history.clear();
                   });
-                  SnackBarUtil.success(message: '历史记录已清除');
+                  AppOverlay.snack.success(message: '历史记录已清除');
                 },
                 icon: Icon(Icons.delete_outline, size: 18.sp),
                 label: Text('清除全部', style: TextStyle(fontSize: 14.sp)),
@@ -737,7 +737,7 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
                 setState(() {
                   _urlController.text = clipboardData!.text!;
                 });
-                SnackBarUtil.success(message: '已粘贴剪贴板内容');
+                AppOverlay.snack.success(message: '已粘贴剪贴板内容');
               }
             },
           ),
@@ -1151,13 +1151,13 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
   Future<void> _testWebUrl(ul.LaunchMode mode) async {
     final url = _urlController.text.trim();
     if (url.isEmpty) {
-      SnackBarUtil.warning(message: '请输入URL地址');
+      AppOverlay.snack.warning(message: '请输入URL地址');
       return;
     }
 
     // 简单的URL验证
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      SnackBarUtil.warning(message: 'URL格式不正确，请以 http:// 或 https:// 开头');
+      AppOverlay.snack.warning(message: 'URL格式不正确，请以 http:// 或 https:// 开头');
       return;
     }
 
@@ -1217,7 +1217,7 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
   Future<void> _testPhoneCall() async {
     final phone = _phoneController.text.trim();
     if (phone.isEmpty) {
-      SnackBarUtil.warning(message: '请输入电话号码');
+      AppOverlay.snack.warning(message: '请输入电话号码');
       return;
     }
 
@@ -1234,7 +1234,7 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
   Future<void> _testSendSms() async {
     final phone = _phoneController.text.trim();
     if (phone.isEmpty) {
-      SnackBarUtil.warning(message: '请输入电话号码');
+      AppOverlay.snack.warning(message: '请输入电话号码');
       return;
     }
 
@@ -1253,7 +1253,7 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
   Future<void> _testSendEmail() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      SnackBarUtil.warning(message: '请输入邮箱地址');
+      AppOverlay.snack.warning(message: '请输入邮箱地址');
       return;
     }
 
@@ -1277,7 +1277,7 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
     final lngStr = _longitudeController.text.trim();
 
     if (latStr.isEmpty || lngStr.isEmpty) {
-      SnackBarUtil.warning(message: '请输入纬度和经度');
+      AppOverlay.snack.warning(message: '请输入纬度和经度');
       return;
     }
 
@@ -1285,7 +1285,7 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
     final lng = double.tryParse(lngStr);
 
     if (lat == null || lng == null) {
-      SnackBarUtil.warning(message: '请输入有效的坐标');
+      AppOverlay.snack.warning(message: '请输入有效的坐标');
       return;
     }
 
@@ -1304,7 +1304,7 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
   Future<void> _testOpenMapByAddress() async {
     final address = _addressController.text.trim();
     if (address.isEmpty) {
-      SnackBarUtil.warning(message: '请输入地址');
+      AppOverlay.snack.warning(message: '请输入地址');
       return;
     }
 
@@ -1374,7 +1374,7 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
   Future<void> _testUrlWithConfirm() async {
     final url = _urlController.text.trim();
     if (url.isEmpty) {
-      SnackBarUtil.warning(message: '请输入URL地址');
+      AppOverlay.snack.warning(message: '请输入URL地址');
       return;
     }
 
@@ -1390,7 +1390,7 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
   Future<void> _testPhoneWithConfirm() async {
     final phone = _phoneController.text.trim();
     if (phone.isEmpty) {
-      SnackBarUtil.warning(message: '请输入电话号码');
+      AppOverlay.snack.warning(message: '请输入电话号码');
       return;
     }
 
@@ -1406,7 +1406,7 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
   Future<void> _testEmailWithConfirm() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      SnackBarUtil.warning(message: '请输入邮箱地址');
+      AppOverlay.snack.warning(message: '请输入邮箱地址');
       return;
     }
 
@@ -1424,12 +1424,12 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
   Future<void> _testCanLaunchUrl() async {
     final url = _urlController.text.trim();
     if (url.isEmpty) {
-      SnackBarUtil.warning(message: '请输入URL地址');
+      AppOverlay.snack.warning(message: '请输入URL地址');
       return;
     }
 
     final canLaunch = await UrlLauncherUtil.canOpenUrl(url);
-    SnackBarUtil.info(
+    AppOverlay.snack.info(
       message: 'URL支持状态：${canLaunch ? '支持' : '不支持'}\nURL: $url',
       title: 'URL支持检查',
     );
@@ -1439,12 +1439,12 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
   Future<void> _testCanMakePhoneCall() async {
     final phone = _phoneController.text.trim();
     if (phone.isEmpty) {
-      SnackBarUtil.warning(message: '请输入电话号码');
+      AppOverlay.snack.warning(message: '请输入电话号码');
       return;
     }
 
     final canCall = await UrlLauncherUtil.canMakePhoneCall(phone);
-    SnackBarUtil.info(
+    AppOverlay.snack.info(
       message: '电话支持状态：${canCall ? '支持' : '不支持'}\n电话: $phone',
       title: '电话支持检查',
     );
@@ -1453,7 +1453,7 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
   /// 测试检查邮件支持
   Future<void> _testCanSendEmail() async {
     final canEmail = await UrlLauncherUtil.canSendEmail();
-    SnackBarUtil.info(
+    AppOverlay.snack.info(
       message: '邮件支持状态：${canEmail ? '支持' : '不支持'}',
       title: '邮件支持检查',
     );
@@ -1462,7 +1462,7 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
   /// 测试检查短信支持
   Future<void> _testCanSendSms() async {
     final canSms = await UrlLauncherUtil.canSendSms();
-    SnackBarUtil.info(
+    AppOverlay.snack.info(
       message: '短信支持状态：${canSms ? '支持' : '不支持'}',
       title: '短信支持检查',
     );
@@ -1472,25 +1472,25 @@ class _UrlLauncherDemoPageState extends State<UrlLauncherDemoPage> {
   void _handleLaunchResult(LaunchResult result, String? error, String target) {
     switch (result) {
       case LaunchResult.success:
-        SnackBarUtil.success(
+        AppOverlay.snack.success(
           message: '跳转成功：$target',
           title: '操作完成',
         );
         break;
       case LaunchResult.failed:
-        SnackBarUtil.error(
+        AppOverlay.snack.error(
           message: '跳转失败：$target\n错误：$error',
           title: '操作失败',
         );
         break;
       case LaunchResult.notSupported:
-        SnackBarUtil.warning(
+        AppOverlay.snack.warning(
           message: '当前设备不支持此操作：$target',
           title: '不支持',
         );
         break;
       case LaunchResult.cancelled:
-        SnackBarUtil.info(
+        AppOverlay.snack.info(
           message: '用户取消了操作：$target',
           title: '已取消',
         );

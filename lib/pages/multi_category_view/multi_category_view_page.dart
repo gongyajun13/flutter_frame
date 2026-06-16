@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../base/base_page.dart';
 import '../../theme/app_design_tokens.dart';
+import '../../overlay/overlay.dart';
 import 'multi_category_view_controller.dart';
 
 /// 多分类数据视图页面
@@ -120,12 +121,10 @@ class MultiCategoryViewPage extends BasePage<MultiCategoryViewController> {
 
   /// 标题栏右侧按钮：弹出操作面板，用于新增/删除 Tab
   void _showTabActionsSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
+    AppOverlay.sheet.show(
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) {
-        return Container(
+      child: Container(
           height: MediaQuery.of(context).size.height * 0.7,
           decoration: BoxDecoration(
             color: AppDesignTokens.surfaceColor,
@@ -182,7 +181,7 @@ class MultiCategoryViewPage extends BasePage<MultiCategoryViewController> {
                             size: 18.w,
                             color: AppDesignTokens.textSecondary,
                           ),
-                          onPressed: () => Navigator.of(context).pop(),
+                          onPressed: () => Get.back(),
                           padding: EdgeInsets.zero,
                         ),
                       ),
@@ -346,8 +345,7 @@ class MultiCategoryViewPage extends BasePage<MultiCategoryViewController> {
               ),
             ),
           ),
-        );
-      },
+        ),
     );
   }
 

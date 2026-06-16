@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:get/get.dart';
-import 'getx_snackbar_util.dart';
+import '../overlay/overlay.dart';
 
 /// WebView 桥接管理器
 /// 负责管理 H5 ↔ Flutter 之间的双向通信
@@ -250,16 +250,16 @@ class WebViewBridgeManager {
     
     switch (type) {
       case 'success':
-        SnackBarUtil.success(message: message);
+        AppOverlay.snack.success(message: message);
         break;
       case 'error':
-        SnackBarUtil.error(message: message);
+        AppOverlay.snack.error(message: message);
         break;
       case 'warning':
-        SnackBarUtil.warning(message: message);
+        AppOverlay.snack.warning(message: message);
         break;
       default:
-        SnackBarUtil.info(message: message);
+        AppOverlay.snack.info(message: message);
     }
     
     return {'message': '显示成功'};

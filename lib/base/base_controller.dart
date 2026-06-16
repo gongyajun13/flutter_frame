@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
-import '../app/controllers/theme_controller.dart';
+import '../overlay/overlay.dart';
 import '../utils/error_monitor_service.dart';
 
 /// Controller 基类
@@ -202,29 +202,14 @@ abstract class BaseController extends GetxController {
 
   // ==================== 工具方法 ====================
 
-  /// 获取 SnackBar 随主题的背景色和文字色
-  static (Color bg, Color text) _snackBarThemeColors() {
-    try {
-      final themeController = Get.find<ThemeController>();
-      final isDark = themeController.isDarkTheme;
-      return isDark
-          ? (Colors.grey.shade800, Colors.white)
-          : (Colors.grey.shade200, Colors.black87);
-    } catch (_) {
-      return (Colors.grey.shade200, Colors.black87);
-    }
-  }
-
   /// 显示成功提示
   void showSuccess(String message) {
-    final (bg, text) = _snackBarThemeColors();
-    Get.snackbar('成功', message, backgroundColor: bg, colorText: text);
+    AppOverlay.snack.success(message: message);
   }
 
   /// 显示错误提示
   void showError(String message, {Object? error, StackTrace? stackTrace}) {
-    final (bg, text) = _snackBarThemeColors();
-    Get.snackbar('错误', message, backgroundColor: bg, colorText: text);
+    AppOverlay.snack.error(message: message);
     
     // 上报错误到错误监控系统
     if (error != null) {
@@ -244,14 +229,12 @@ abstract class BaseController extends GetxController {
 
   /// 显示警告提示
   void showWarning(String message) {
-    final (bg, text) = _snackBarThemeColors();
-    Get.snackbar('警告', message, backgroundColor: bg, colorText: text);
+    AppOverlay.snack.warning(message: message);
   }
 
   /// 显示信息提示
   void showInfo(String message) {
-    final (bg, text) = _snackBarThemeColors();
-    Get.snackbar('提示', message, backgroundColor: bg, colorText: text);
+    AppOverlay.snack.info(message: message);
   }
 
   /// 导航到指定路由
@@ -283,33 +266,12 @@ abstract class BaseLoadingController extends BaseController {
 
   /// 显示加载对话框
   void showLoadingDialog({String? message}) {
-    Get.dialog(
-      Center(
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text(message ?? loadingMessage),
-            ],
-          ),
-        ),
-      ),
-      barrierDismissible: false,
-    );
+    AppOverlay.dialog.showLoading(message: message ?? loadingMessage);
   }
 
   /// 隐藏加载对话框
   void hideLoadingDialog() {
-    if (Get.isDialogOpen == true) {
-      Get.back();
-    }
+    AppOverlay.dialog.hideLoading();
   }
 
   @override

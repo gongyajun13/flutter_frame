@@ -8,6 +8,7 @@ import 'package:wechat_camera_picker/wechat_camera_picker.dart';
 import 'package:photo_manager/photo_manager.dart';
 import '../../base/base_controller.dart';
 import '../../utils/image_util.dart';
+import '../../overlay/overlay.dart';
 import '../../utils/image_picker_helper.dart';
 
 /// 图片压缩信息
@@ -240,91 +241,47 @@ class ImageUtilDemoController extends BaseController {
 
   /// 显示图片选择对话框（系统选择器）
   Future<void> showImagePickerDialog() async {
-    final result = await Get.dialog<String>(
-      AlertDialog(
-        title: const Text('选择图片'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera),
-              title: const Text('相机拍照'),
-              onTap: () => Get.back(result: 'camera'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('从相册选择单张'),
-              onTap: () => Get.back(result: 'gallery_single'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('从相册选择多张'),
-              subtitle: const Text('最多9张'),
-              onTap: () => Get.back(result: 'gallery_multiple'),
-            ),
-          ],
-        ),
-      ),
+    const options = ['相机拍照', '从相册选择单张', '从相册选择多张（最多9张）'];
+    const keys = ['camera', 'gallery_single', 'gallery_multiple'];
+    final index = await AppOverlay.dialog.selectAsync(
+      title: '选择图片',
+      options: options,
     );
+    if (index == null || index < 0 || index >= keys.length) return;
 
-    if (result != null) {
-      switch (result) {
-        case 'camera':
-          await pickFromCamera();
-          break;
-        case 'gallery_single':
-          await pickFromGallery();
-          break;
-        case 'gallery_multiple':
-          await pickMultipleImages();
-          break;
-      }
+    switch (keys[index]) {
+      case 'camera':
+        await pickFromCamera();
+        break;
+      case 'gallery_single':
+        await pickFromGallery();
+        break;
+      case 'gallery_multiple':
+        await pickMultipleImages();
+        break;
     }
   }
 
   /// 显示微信选择器对话框
   Future<void> showWechatPickerDialog() async {
-    final result = await Get.dialog<String>(
-      AlertDialog(
-        title: const Text('微信选择器'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('微信相册'),
-              subtitle: const Text('使用微信风格相册选择'),
-              onTap: () => Get.back(result: 'wechat_assets'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('微信拍照'),
-              subtitle: const Text('使用微信风格相机'),
-              onTap: () => Get.back(result: 'wechat_camera'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.videocam),
-              title: const Text('微信录像'),
-              subtitle: const Text('使用微信风格录像'),
-              onTap: () => Get.back(result: 'wechat_video'),
-            ),
-          ],
-        ),
-      ),
+    const options = ['微信相册', '微信拍照', '微信录像'];
+    const keys = ['wechat_assets', 'wechat_camera', 'wechat_video'];
+    final index = await AppOverlay.dialog.selectAsync(
+      title: '微信选择器',
+      options: options,
     );
+    if (index == null || index < 0 || index >= keys.length) return;
 
-    if (result != null) {
-      switch (result) {
-        case 'wechat_assets':
-          await pickFromWechatAssets();
-          break;
-        case 'wechat_camera':
-          await takePhotoWithWechatCamera();
-          break;
-        case 'wechat_video':
-          await recordVideoWithWechatCamera();
-          break;
-      }
+    switch (keys[index]) {
+      case 'wechat_assets':
+        await pickFromWechatAssets();
+        break;
+      case 'wechat_camera':
+        await takePhotoWithWechatCamera();
+        break;
+      case 'wechat_video':
+        await recordVideoWithWechatCamera();
+        break;
     }
   }
 
@@ -512,28 +469,12 @@ class ImageUtilDemoController extends BaseController {
   /// 完整流程：选择 -> 裁剪 -> 压缩 -> 上传
   Future<void> completeFlow() async {
     // 1. 选择图片来源
-    final source = await Get.dialog<ImageSource>(
-      AlertDialog(
-        title: const Text('选择图片来源'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera),
-              title: const Text('相机'),
-              onTap: () => Get.back(result: ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('相册'),
-              onTap: () => Get.back(result: ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
+    final sourceIndex = await AppOverlay.dialog.selectAsync(
+      title: '选择图片来源',
+      options: const ['相机', '相册'],
     );
-
-    if (source == null) return;
+    if (sourceIndex == null) return;
+    final source = sourceIndex == 0 ? ImageSource.camera : ImageSource.gallery;
 
     // 2. 选择并处理图片
     final file = await ImageUtil.pickAndProcessImage(
@@ -555,21 +496,11 @@ class ImageUtilDemoController extends BaseController {
       await _updateFileSize(file);
 
       // 3. 显示是否上传的确认对话框
-      final shouldUpload = await Get.dialog<bool>(
-        AlertDialog(
-          title: const Text('确认'),
-          content: const Text('是否上传此图片？'),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(result: false),
-              child: const Text('取消'),
-            ),
-            TextButton(
-              onPressed: () => Get.back(result: true),
-              child: const Text('上传'),
-            ),
-          ],
-        ),
+      final shouldUpload = await AppOverlay.dialog.confirmAsync(
+        title: '确认',
+        message: '是否上传此图片？',
+        confirmText: '上传',
+        cancelText: '取消',
       );
 
       if (shouldUpload == true) {

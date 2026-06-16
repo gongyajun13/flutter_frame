@@ -1,8 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart' as ul;
-import 'getx_dialog_util.dart';
-import 'getx_snackbar_util.dart';
+import '../overlay/overlay.dart';
 
 /// URL跳转结果枚举
 enum LaunchResult {
@@ -359,7 +358,7 @@ class UrlLauncherUtil {
     String? cancelText,
     ul.LaunchMode mode = ul.LaunchMode.platformDefault,
   }) async {
-    DialogUtil.showConfirm(
+    AppOverlay.dialog.showConfirm(
       title: title ?? '确认跳转',
       message: message ?? '即将跳转到：\n$url',
       confirmText: confirmText ?? '确认',
@@ -380,7 +379,7 @@ class UrlLauncherUtil {
     String? confirmText,
     String? cancelText,
   }) async {
-    DialogUtil.showConfirm(
+    AppOverlay.dialog.showConfirm(
       title: title ?? '确认拨打电话',
       message: message ?? '即将拨打电话：\n$phoneNumber',
       confirmText: confirmText ?? '拨打',
@@ -403,7 +402,7 @@ class UrlLauncherUtil {
     String? confirmText,
     String? cancelText,
   }) async {
-    DialogUtil.showConfirm(
+    AppOverlay.dialog.showConfirm(
       title: title ?? '确认发送邮件',
       message: message ?? '即将发送邮件到：\n$to',
       confirmText: confirmText ?? '发送',
@@ -518,25 +517,25 @@ class UrlLauncherUtil {
   ) {
     switch (result) {
       case LaunchResult.success:
-        SnackBarUtil.success(
+        AppOverlay.snack.success(
           message: '跳转成功',
           title: '操作完成',
         );
         break;
       case LaunchResult.failed:
-        SnackBarUtil.error(
+        AppOverlay.snack.error(
           message: '跳转失败：$target',
           title: '操作失败',
         );
         break;
       case LaunchResult.notSupported:
-        SnackBarUtil.warning(
+        AppOverlay.snack.warning(
           message: '当前设备不支持此操作',
           title: '不支持',
         );
         break;
       case LaunchResult.cancelled:
-        SnackBarUtil.info(
+        AppOverlay.snack.info(
           message: '用户取消了操作',
           title: '已取消',
         );

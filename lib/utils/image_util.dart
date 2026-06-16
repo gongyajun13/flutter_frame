@@ -7,6 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:dio/dio.dart';
+import '../overlay/overlay.dart';
 
 /// 图片处理工具类
 /// 
@@ -410,29 +411,13 @@ class ImageUtil {
   /// 
   /// 返回选择的来源类型，如果用户取消则返回 null
   static Future<ImageSource?> showImageSourceDialog(BuildContext context) async {
-    return showDialog<ImageSource>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('选择图片来源'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.photo_camera),
-                title: const Text('相机'),
-                onTap: () => Navigator.pop(context, ImageSource.camera),
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('相册'),
-                onTap: () => Navigator.pop(context, ImageSource.gallery),
-              ),
-            ],
-          ),
-        );
-      },
+    final index = await AppOverlay.dialog.selectAsync(
+      title: '选择图片来源',
+      options: const ['相机', '相册'],
     );
+    if (index == 0) return ImageSource.camera;
+    if (index == 1) return ImageSource.gallery;
+    return null;
   }
 
   /// 完整的图片处理流程（选择 -> 裁剪 -> 压缩）

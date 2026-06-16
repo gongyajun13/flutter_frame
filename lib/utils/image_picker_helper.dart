@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
+import '../overlay/overlay.dart';
 
 /// 图片选择辅助工具类
 /// 统一处理图片选择后的逻辑，减少代码重复
@@ -31,11 +32,9 @@ class ImagePickerHelper {
       // 如果权限被拒绝，提示用户
       if (ps == PermissionState.denied) {
         if (showSnackbar) {
-          Get.snackbar(
-            '权限提示',
-            '需要相册权限才能选择图片，请在设置中开启',
-            snackPosition: SnackPosition.BOTTOM,
-            duration: const Duration(seconds: 3),
+          AppOverlay.snack.warning(
+            message: '需要相册权限才能选择图片，请在设置中开启',
+            title: '权限提示',
           );
         }
         return false;
@@ -44,11 +43,9 @@ class ImagePickerHelper {
       // 如果权限受限，也提示用户
       if (ps == PermissionState.restricted) {
         if (showSnackbar) {
-          Get.snackbar(
-            '权限提示',
-            '相册权限受限，无法选择图片',
-            snackPosition: SnackPosition.BOTTOM,
-            duration: const Duration(seconds: 3),
+          AppOverlay.snack.warning(
+            message: '相册权限受限，无法选择图片',
+            title: '权限提示',
           );
         }
         return false;
@@ -73,28 +70,22 @@ class ImagePickerHelper {
     final isPermission = isPermissionError(error);
     
     if (isPermission) {
-      Get.snackbar(
-        '权限提示',
-        permissionMessage ?? '需要相册权限才能选择图片，请在设置中开启',
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 3),
+      AppOverlay.snack.warning(
+        message: permissionMessage ?? '需要相册权限才能选择图片，请在设置中开启',
+        title: '权限提示',
       );
     } else {
-      Get.snackbar(
-        '错误',
-        defaultMessage ?? '选择图片失败，请重试',
-        snackPosition: SnackPosition.BOTTOM,
+      AppOverlay.snack.error(
+        message: defaultMessage ?? '选择图片失败，请重试',
       );
     }
   }
 
   /// 处理相机权限错误
   static void handleCameraPermissionError() {
-    Get.snackbar(
-      '权限提示',
-      '需要相机权限才能拍照，请在设置中开启',
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 3),
+    AppOverlay.snack.warning(
+      message: '需要相机权限才能拍照，请在设置中开启',
+      title: '权限提示',
     );
   }
 
@@ -114,11 +105,7 @@ class ImagePickerHelper {
 
   /// 显示成功提示
   static void showSuccessMessage(String message) {
-    Get.snackbar(
-      '成功',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    AppOverlay.toast.success(message);
   }
 }
 

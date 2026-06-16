@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../overlay/overlay.dart';
 import '../controllers/theme_controller.dart';
 
 /// 主题切换动画包装器
@@ -326,17 +327,9 @@ class ThemeLoadingIndicator extends StatelessWidget {
 /// 主题切换成功提示
 class ThemeChangeSuccessSnackBar {
   static void show(String themeName) {
-    Get.snackbar(
-      '主题切换成功',
-      '已切换到 $themeName',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green.withOpacity(0.8),
-      colorText: Colors.white,
-      icon: const Icon(Icons.check_circle, color: Colors.white),
-      duration: const Duration(seconds: 2),
-      margin: const EdgeInsets.all(16),
-      borderRadius: 8,
-      animationDuration: const Duration(milliseconds: 300),
+    AppOverlay.snack.success(
+      title: '主题切换成功',
+      message: '已切换到 $themeName',
     );
   }
 }
@@ -344,17 +337,9 @@ class ThemeChangeSuccessSnackBar {
 /// 主题切换错误提示
 class ThemeChangeErrorSnackBar {
   static void show(String error) {
-    Get.snackbar(
-      '主题切换失败',
-      error,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red.withOpacity(0.8),
-      colorText: Colors.white,
-      icon: const Icon(Icons.error, color: Colors.white),
-      duration: const Duration(seconds: 3),
-      margin: const EdgeInsets.all(16),
-      borderRadius: 8,
-      animationDuration: const Duration(milliseconds: 300),
+    AppOverlay.snack.error(
+      title: '主题切换失败',
+      message: error,
     );
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../base/base_controller.dart';
 import '../../utils/local_cache_util.dart';
-import '../../utils/getx_dialog_util.dart';
+import '../../overlay/overlay.dart';
 
 /// 本地缓存演示控制器
 class LocalCacheDemoController extends BaseController {
@@ -336,7 +336,7 @@ class LocalCacheDemoController extends BaseController {
 
   /// 测试清空所有数据
   void testClearAll() {
-    DialogUtil.showConfirm(
+    AppOverlay.dialog.showConfirm(
       title: '确认清空',
       message: '确定要清空所有本地缓存数据吗？此操作不可恢复！',
       confirmText: '确定清空',

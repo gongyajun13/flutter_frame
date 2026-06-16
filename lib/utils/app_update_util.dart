@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
+import '../overlay/overlay.dart';
 
 /// 应用更新信息
 class AppUpdateInfo {
@@ -625,16 +626,16 @@ class AppUpdateUtil {
 
   // 轻量提示
   static void _snackSuccess(String message) {
-    Get.snackbar('成功', message, snackPosition: SnackPosition.TOP, backgroundColor: Colors.green.shade600, colorText: Colors.white);
+    AppOverlay.snack.success(message: message);
   }
   static void _snackError(String message) {
-    Get.snackbar('错误', message, snackPosition: SnackPosition.TOP, backgroundColor: Colors.red.shade600, colorText: Colors.white);
+    AppOverlay.snack.error(message: message);
   }
   static void _snackWarning(String message) {
-    Get.snackbar('警告', message, snackPosition: SnackPosition.TOP, backgroundColor: Colors.orange.shade600, colorText: Colors.white);
+    AppOverlay.snack.warning(message: message);
   }
   static void _snackInfo(String message) {
-    Get.snackbar('提示', message, snackPosition: SnackPosition.TOP, backgroundColor: Colors.blue.shade600, colorText: Colors.white);
+    AppOverlay.snack.info(message: message);
   }
 
   // iOS 打开文件 / App Store
@@ -661,66 +662,10 @@ class AppUpdateUtil {
     required Widget child,
     bool barrierDismissible = false,
   }) {
-    Get.dialog(
-      Dialog(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        insetPadding: EdgeInsets.zero,
-        child: Center(
-          child: Container(
-            margin: EdgeInsets.symmetric(horizontal: Get.width * 0.08),
-            constraints: BoxConstraints(
-              minWidth: 280.w,
-              maxWidth: Get.width * 0.85,
-              maxHeight: Get.height * 0.8,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 20.r,
-                  offset: Offset(0, 8.h),
-                  spreadRadius: 0,
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: Padding(
-                padding: EdgeInsets.all(20.w),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // 标题
-                    SizedBox(
-                      height: 36.h,
-                      child: Center(
-                        child: Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey.shade800,
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    child,
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+    AppOverlay.dialog.showCustomWithTitle(
+      title: title,
+      child: child,
       barrierDismissible: barrierDismissible,
-      barrierColor: Colors.black.withOpacity(0.6),
     );
   }
 }

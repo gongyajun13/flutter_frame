@@ -1,5 +1,4 @@
-import '../../utils/getx_dialog_util.dart';
-import '../../utils/getx_snackbar_util.dart';
+import '../../overlay/overlay.dart';
 import '../models/api_response.dart';
 import '../services/network_service.dart';
 
@@ -297,21 +296,21 @@ class NetworkManager {
 
   /// 显示loading
   void _showLoading(String text) {
-    DialogUtil.showLoading(message: text);
+    AppOverlay.dialog.showLoading(message: text);
   }
 
   /// 隐藏loading
   void _hideLoading() {
-    DialogUtil.hideLoading();
+    AppOverlay.dialog.hideLoading();
   }
 
   /// 显示成功提示
   void _showSuccess(String message) {
-    SnackBarUtil.success(message: message);
+    AppOverlay.snack.success(message: message);
   }
 
   /// 显示错误提示
   void _showError(String message) {
-    SnackBarUtil.error(message: message);
+    AppOverlay.snack.error(message: message);
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../base/base_controller.dart';
+import '../../overlay/overlay.dart';
 import '../../widgets/cached_video_player_widget.dart';
 import '../../widgets/fullscreen_video_player_widget.dart';
 
@@ -77,33 +78,21 @@ class VideoPlayerDemoController extends BaseController {
 
   /// 显示功能说明对话框
   void showFeaturesDialog() {
-    Get.dialog(
-      Dialog(
-        child: Padding(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '视频播放器特点',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              _buildFeatureItem('✅', '支持视频缓存'),
-              _buildFeatureItem('✅', '自定义封面图'),
-              _buildFeatureItem('✅', '播放控制'),
-              _buildFeatureItem('✅', '进度条拖动'),
-              _buildFeatureItem('✅', '时长显示'),
-              _buildFeatureItem('✅', '状态监听'),
-              _buildFeatureItem('✅', '加载/错误处理'),
-              _buildFeatureItem('✅', '全屏播放'),
-            ],
-          ),
-        ),
+    AppOverlay.dialog.showCustomWithTitle(
+      title: '视频播放器特点',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildFeatureItem('✅', '支持视频缓存'),
+          _buildFeatureItem('✅', '自定义封面图'),
+          _buildFeatureItem('✅', '播放控制'),
+          _buildFeatureItem('✅', '进度条拖动'),
+          _buildFeatureItem('✅', '时长显示'),
+          _buildFeatureItem('✅', '状态监听'),
+          _buildFeatureItem('✅', '加载/错误处理'),
+          _buildFeatureItem('✅', '全屏播放'),
+        ],
       ),
     );
   }

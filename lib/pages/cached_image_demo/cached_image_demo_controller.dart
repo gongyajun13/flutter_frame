@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import '../../base/base_controller.dart';
-import '../../utils/getx_snackbar_util.dart';
+import '../../overlay/overlay.dart';
 
 /// 缓存图片演示控制器
 class CachedImageDemoController extends BaseController {
@@ -22,7 +22,7 @@ class CachedImageDemoController extends BaseController {
 
   /// 显示图片信息
   void showImageInfo(String title, String url) {
-    SnackBarUtil.info(
+    AppOverlay.snack.info(
       message: '$title\nURL: $url',
       title: '图片信息',
     );

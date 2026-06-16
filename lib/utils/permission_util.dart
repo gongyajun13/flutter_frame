@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:device_info_plus/device_info_plus.dart';
-import 'getx_dialog_util.dart';
+import '../overlay/overlay.dart';
 import 'url_launcher_util.dart';
 import 'permission_explanation_config.dart';
 import '../widgets/permission_explanation_dialog.dart';
@@ -830,7 +830,7 @@ class PermissionUtil {
     String? dialogTitle,
     String? dialogMessage,
   }) async {
-    DialogUtil.showConfirm(
+    AppOverlay.dialog.showConfirm(
       title: dialogTitle ?? '需要权限',
       message: dialogMessage ?? '应用需要此权限才能正常工作，请在设置中开启。',
       confirmText: '去设置',

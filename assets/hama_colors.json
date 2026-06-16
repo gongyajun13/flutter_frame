@@ -1,0 +1,272 @@
+{
+  "brand": "Hama",
+  "source": "User Provided Images",
+  "total_colors": 53,
+  "colors": [
+    {
+      "code": "H01",
+      "name": "H01",
+      "hex": "#ECEDED"
+    },
+    {
+      "code": "H02",
+      "name": "H02",
+      "hex": "#F0E8B9"
+    },
+    {
+      "code": "H03",
+      "name": "H03",
+      "hex": "#F0B901"
+    },
+    {
+      "code": "H04",
+      "name": "H04",
+      "hex": "#E64F27"
+    },
+    {
+      "code": "H05",
+      "name": "H05",
+      "hex": "#B63136"
+    },
+    {
+      "code": "H06",
+      "name": "H06",
+      "hex": "#E1889F"
+    },
+    {
+      "code": "H07",
+      "name": "H07",
+      "hex": "#694A82"
+    },
+    {
+      "code": "H08",
+      "name": "H08",
+      "hex": "#2C4690"
+    },
+    {
+      "code": "H09",
+      "name": "H09",
+      "hex": "#305CB0"
+    },
+    {
+      "code": "H10",
+      "name": "H10",
+      "hex": "#256847"
+    },
+    {
+      "code": "H101",
+      "name": "H101",
+      "hex": "#A9C39B"
+    },
+    {
+      "code": "H102",
+      "name": "H102",
+      "hex": "#356B2D"
+    },
+    {
+      "code": "H103",
+      "name": "H103",
+      "hex": "#FFE660"
+    },
+    {
+      "code": "H104",
+      "name": "H104",
+      "hex": "#BCD122"
+    },
+    {
+      "code": "H105",
+      "name": "H105",
+      "hex": "#FFAC78"
+    },
+    {
+      "code": "H106",
+      "name": "H106",
+      "hex": "#CCC5ED"
+    },
+    {
+      "code": "H107",
+      "name": "H107",
+      "hex": "#6A87C1"
+    },
+    {
+      "code": "H11",
+      "name": "H11",
+      "hex": "#49AE89"
+    },
+    {
+      "code": "H12",
+      "name": "H12",
+      "hex": "#534137"
+    },
+    {
+      "code": "H17",
+      "name": "H17",
+      "hex": "#83888A"
+    },
+    {
+      "code": "H18",
+      "name": "H18",
+      "hex": "#2E2F31"
+    },
+    {
+      "code": "H20",
+      "name": "H20",
+      "hex": "#7F332A"
+    },
+    {
+      "code": "H21",
+      "name": "H21",
+      "hex": "#A5693F"
+    },
+    {
+      "code": "H22",
+      "name": "H22",
+      "hex": "#A52D36"
+    },
+    {
+      "code": "H26",
+      "name": "H26",
+      "hex": "#DE9B90"
+    },
+    {
+      "code": "H27",
+      "name": "H27",
+      "hex": "#DEB48B"
+    },
+    {
+      "code": "H28",
+      "name": "H28",
+      "hex": "#363F38"
+    },
+    {
+      "code": "H29",
+      "name": "H29",
+      "hex": "#B9395E"
+    },
+    {
+      "code": "H30",
+      "name": "H30",
+      "hex": "#592F38"
+    },
+    {
+      "code": "H31",
+      "name": "H31",
+      "hex": "#6797AE"
+    },
+    {
+      "code": "H33",
+      "name": "H33",
+      "hex": "#FF3956"
+    },
+    {
+      "code": "H43",
+      "name": "H43",
+      "hex": "#F0EA37"
+    },
+    {
+      "code": "H44",
+      "name": "H44",
+      "hex": "#EE6972"
+    },
+    {
+      "code": "H45",
+      "name": "H45",
+      "hex": "#886DB9"
+    },
+    {
+      "code": "H46",
+      "name": "H46",
+      "hex": "#629ED7"
+    },
+    {
+      "code": "H47",
+      "name": "H47",
+      "hex": "#83CB70"
+    },
+    {
+      "code": "H48",
+      "name": "H48",
+      "hex": "#CF70B7"
+    },
+    {
+      "code": "H49",
+      "name": "H49",
+      "hex": "#4998BC"
+    },
+    {
+      "code": "H60",
+      "name": "H60",
+      "hex": "#F49422"
+    },
+    {
+      "code": "H70",
+      "name": "H70",
+      "hex": "#B6B6D4"
+    },
+    {
+      "code": "H71",
+      "name": "H71",
+      "hex": "#464541"
+    },
+    {
+      "code": "H75",
+      "name": "H75",
+      "hex": "#BF7B4D"
+    },
+    {
+      "code": "H76",
+      "name": "H76",
+      "hex": "#663317"
+    },
+    {
+      "code": "H77",
+      "name": "H77",
+      "hex": "#EDE7DF"
+    },
+    {
+      "code": "H78",
+      "name": "H78",
+      "hex": "#FFC99A"
+    },
+    {
+      "code": "H79",
+      "name": "H79",
+      "hex": "#F08643"
+    },
+    {
+      "code": "H82",
+      "name": "H82",
+      "hex": "#962F5C"
+    },
+    {
+      "code": "H83",
+      "name": "H83",
+      "hex": "#0178A4"
+    },
+    {
+      "code": "H84",
+      "name": "H84",
+      "hex": "#8B924C"
+    },
+    {
+      "code": "H95",
+      "name": "H95",
+      "hex": "#F8CCE0"
+    },
+    {
+      "code": "H96",
+      "name": "H96",
+      "hex": "#D4B1E3"
+    },
+    {
+      "code": "H97",
+      "name": "H97",
+      "hex": "#A2D3FE"
+    },
+    {
+      "code": "H98",
+      "name": "H98",
+      "hex": "#9ADBB1"
+    }
+  ]
+}

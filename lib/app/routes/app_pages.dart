@@ -19,6 +19,9 @@ import '../../pages/selector_demo/selector_demo_page.dart';
 import '../../pages/selector_demo/selector_demo_binding.dart';
 import '../../pages/image_util_demo/image_util_demo_view.dart';
 import '../../pages/image_util_demo/image_util_demo_binding.dart';
+import '../../pages/pixelize_demo/pixelize_demo_page.dart';
+import '../../pages/pixelize_demo/pixelize_demo_binding.dart';
+import '../../pages/pixelize_demo/pixelize_result_page.dart';
 import '../../pages/video_player_demo/video_player_demo_page.dart';
 import '../../pages/video_player_demo/video_player_demo_binding.dart';
 import '../../pages/deepseek_demo/deepseek_demo_view.dart';
@@ -118,6 +121,20 @@ class AppPages {
       name: _Paths.IMAGE_UTIL_DEMO,
       page: () => const ImageUtilDemoView(),
       binding: ImageUtilDemoBinding(),
+    ),
+
+    // 像素化图片演示
+    GetPage(
+      name: _Paths.PIXELIZE_DEMO,
+      page: () => const PixelizeDemoPage(),
+      binding: PixelizeDemoBinding(),
+    ),
+
+    // 像素化结果页面
+    GetPage(
+      name: _Paths.PIXELIZE_RESULT,
+      page: () => PixelizeResultPage(),
+      binding: PixelizeResultBinding(),
     ),
 
     // 视频播放器演示

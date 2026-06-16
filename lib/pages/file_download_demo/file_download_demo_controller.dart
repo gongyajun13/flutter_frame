@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../base/base_controller.dart';
 import '../../network/config/network_config.dart';
+import '../../overlay/overlay.dart';
 import '../../utils/app_logger.dart';
 import 'models/download_item_model.dart';
 
@@ -267,21 +268,11 @@ class FileDownloadDemoController extends BaseController {
         final file = File(savePath);
         if (await file.exists()) {
           // 如果文件已存在，询问是否覆盖
-          final shouldOverwrite = await Get.dialog<bool>(
-            AlertDialog(
-              title: Text('文件已存在'),
-              content: Text('文件 "$fileName" 已存在，是否覆盖？'),
-              actions: [
-                TextButton(
-                  onPressed: () => Get.back(result: false),
-                  child: Text('取消'),
-                ),
-                TextButton(
-                  onPressed: () => Get.back(result: true),
-                  child: Text('覆盖'),
-                ),
-              ],
-            ),
+          final shouldOverwrite = await AppOverlay.dialog.confirmAsync(
+            title: '文件已存在',
+            message: '文件 "$fileName" 已存在，是否覆盖？',
+            confirmText: '覆盖',
+            cancelText: '取消',
           );
 
           if (shouldOverwrite != true) {

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_frame/overlay/overlay.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 
@@ -85,31 +86,12 @@ class WebViewFileChooser {
     BuildContext context,
     FileType fileType,
   ) async {
-    return showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('从相册选择'),
-              onTap: () => Navigator.pop(context, ImageSource.gallery),
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('拍照'),
-              onTap: () => Navigator.pop(context, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.cancel),
-              title: const Text('取消'),
-              onTap: () => Navigator.pop(context),
-            ),
-          ],
-        ),
-      ),
+    final index = await AppOverlay.dialog.selectAsync(
+      title: fileType == FileType.video ? '选择视频来源' : '选择图片来源',
+      options: const ['从相册选择', '拍照'],
     );
+    if (index == null) return null;
+    return index == 0 ? ImageSource.gallery : ImageSource.camera;
   }
 
   /// 选择图片

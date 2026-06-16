@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_popup/flutter_popup.dart';
 import '../../base/base_page.dart';
 import '../../theme/app_design_tokens.dart';
-import '../../utils/getx_snackbar_util.dart' show SnackBarUtil;
-import '../../utils/getx_toast_util.dart' show Toast, ToastPosition;
+import '../../overlay/overlay.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/app_button.dart';
 import 'getx_utils_demo_controller.dart';
@@ -47,7 +46,7 @@ class GetXUtilsDemoPage extends BaseScrollPage<GetXUtilsDemoController> {
           [
             AppButton(
               text: '底部成功 Toast',
-              onPressed: () => Toast.success('操作成功完成！'),
+              onPressed: () => AppOverlay.toast.success('操作成功完成！'),
               type: AppButtonType.primary,
               backgroundColor: AppDesignTokens.successColor,
               isFullWidth: true,
@@ -55,7 +54,7 @@ class GetXUtilsDemoPage extends BaseScrollPage<GetXUtilsDemoController> {
             SizedBox(height: AppDesignTokens.spacingV12),
             AppButton(
               text: '底部错误 Toast',
-              onPressed: () => Toast.error('操作失败，请稍后重试'),
+              onPressed: () => AppOverlay.toast.error('操作失败，请稍后重试'),
               type: AppButtonType.primary,
               backgroundColor: AppDesignTokens.errorColor,
               isFullWidth: true,
@@ -64,7 +63,7 @@ class GetXUtilsDemoPage extends BaseScrollPage<GetXUtilsDemoController> {
             AppButton(
               text: '信息 Toast（顶部）',
               onPressed: () =>
-                  Toast.info('这是一条轻量级信息提示', position: ToastPosition.top),
+                  AppOverlay.toast.info('这是一条轻量级信息提示', position: ToastPosition.top),
               type: AppButtonType.primary,
               backgroundColor: AppDesignTokens.infoColor,
               isFullWidth: true,
@@ -86,7 +85,7 @@ class GetXUtilsDemoPage extends BaseScrollPage<GetXUtilsDemoController> {
           [
             AppButton(
               text: '成功提示',
-              onPressed: () => SnackBarUtil.success(
+              onPressed: () => AppOverlay.snack.success(
                 message: '操作成功完成！',
                 title: '成功',
               ),
@@ -97,7 +96,7 @@ class GetXUtilsDemoPage extends BaseScrollPage<GetXUtilsDemoController> {
             SizedBox(height: AppDesignTokens.spacingV12),
             AppButton(
               text: '错误提示',
-              onPressed: () => SnackBarUtil.error(
+              onPressed: () => AppOverlay.snack.error(
                 message: '操作失败，请重试！',
                 title: '错误',
               ),
@@ -108,7 +107,7 @@ class GetXUtilsDemoPage extends BaseScrollPage<GetXUtilsDemoController> {
             SizedBox(height: AppDesignTokens.spacingV12),
             AppButton(
               text: '警告提示',
-              onPressed: () => SnackBarUtil.warning(
+              onPressed: () => AppOverlay.snack.warning(
                 message: '请注意相关风险！',
                 title: '警告',
               ),
@@ -119,7 +118,7 @@ class GetXUtilsDemoPage extends BaseScrollPage<GetXUtilsDemoController> {
             SizedBox(height: AppDesignTokens.spacingV12),
             AppButton(
               text: '信息提示',
-              onPressed: () => SnackBarUtil.info(
+              onPressed: () => AppOverlay.snack.info(
                 message: '这是一条信息提示！',
                 title: '提示',
               ),
@@ -130,7 +129,7 @@ class GetXUtilsDemoPage extends BaseScrollPage<GetXUtilsDemoController> {
             SizedBox(height: AppDesignTokens.spacingV12),
             AppButton(
               text: '自定义SnackBar',
-              onPressed: () => SnackBarUtil.custom(
+              onPressed: () => AppOverlay.snack.custom(
                 message: '自定义样式的提示！',
                 title: '自定义',
                 icon: Icons.star,
@@ -150,7 +149,7 @@ class GetXUtilsDemoPage extends BaseScrollPage<GetXUtilsDemoController> {
             SizedBox(height: AppDesignTokens.spacingV12),
             AppButton.secondary(
               text: '清除所有SnackBar',
-              onPressed: () => SnackBarUtil.clearAll(),
+              onPressed: () => AppOverlay.snack.clearAll(),
               isFullWidth: true,
             ),
             SizedBox(height: AppDesignTokens.spacingV12),
