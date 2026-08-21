@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_frame/utils/toast_util.dart';
 import 'package:flutter_frame/widgets/pixelize/bc_gradient_text_button.dart';
+import 'package:flutter_frame/widgets/pixelize/bc_ok_cancel_content.dart';
 import 'package:flutter_frame/constants/app_values.dart';
 import 'package:flutter_frame/utils/get_extension.dart';
 import 'package:get/get.dart';
@@ -20,6 +21,8 @@ import 'package:flutter_frame/base/base_controller.dart';
 import 'package:flutter_frame/widgets/pixelize/bc_custom_bottom_sheet.dart';
 import 'package:flutter_frame/app/routes/app_pages.dart';
 import 'package:flutter_frame/utils/pixelize_util.dart';
+import 'package:flutter_frame/utils/color_delta.dart';
+import 'package:flutter_frame/utils/color_merge_util.dart';
 import 'package:flutter_frame/utils/pixel_data_codec_util.dart';
 import 'package:flutter_frame/utils/pixel_font_data.dart';
 import 'package:flutter_frame/utils/pixel_shape_computer.dart';
@@ -614,12 +617,14 @@ class PixelizeResultController extends BaseController
     enabledOtherTools.assignAll({ToolMode.square, ToolMode.code});
 
     final args = Get.arguments as Map<String, dynamic>?;
-    if (args == null) return;
 
-    // 恢复本地草稿
-    if (args['restoreLocalDraft'] == true) {
-      final draftId =
-          args['draftId'] as String? ?? LocalDraftStore.singleDraftId;
+    final openDraft = args?['restoreLocalDraft'] == true ||
+        args?['localDraftId'] != null ||
+        args?['draftId'] != null;
+    if (openDraft) {
+      final draftId = args?['draftId'] as String? ??
+          args?['localDraftId'] as String? ??
+          LocalDraftStore.singleDraftId;
       final restored = await _restoreLocalDraft(draftId);
       if (!restored) {
         showToast('草稿恢复失败或已损坏');
@@ -628,18 +633,24 @@ class PixelizeResultController extends BaseController
       return;
     }
 
+    if (args == null) return;
+
     // 空白画布模式
     final isBlankCanvas = args['isBlankCanvas'] as bool? ?? false;
     if (isBlankCanvas) {
+      _currentLocalDraftId = LocalDraftStore.singleDraftId;
       _initBlankCanvas(args);
       if (pixelCodes.isNotEmpty && gridWidth.value > 0 && gridHeight.value > 0) {
         await _loadUsedColors(updateDefaultBrushColor: true);
       }
+      _baselineDraftVersionForViewOnlySession();
       return;
     }
 
     // 图片像素化模式（本地参数）
+    _currentLocalDraftId = LocalDraftStore.singleDraftId;
     await _initWithLocalArgs(args);
+    _baselineDraftVersionForViewOnlySession();
   }
 
   /// 使用本地参数初始化（新建作品或带完整数据的场景）
@@ -930,9 +941,54 @@ class PixelizeResultController extends BaseController
     }
   }
 
-  /// 返回
+  /// 返回：不保存退出 / 保存退出
   void confirmExit() {
-    Get.back();
+    Get.dialog<bool>(
+      const BCOkCancelContent(
+        title: '确认退出',
+        content: '你编辑的画布还未保存到作品，确认退出吗？',
+        cancelText: '不保存退出',
+        okText: '保存退出',
+      ),
+      barrierDismissible: false,
+    ).then((result) async {
+      if (result == null) {
+        _leaveCanvasImmediately();
+        return;
+      }
+      if (result == true) {
+        await _saveWorkAndExit();
+      }
+    });
+  }
+
+  /// 标题栏按钮：0 保存 / 1 导出
+  void titleOption(int index) async {
+    if (_isBlankCanvas()) {
+      showToast('请先绘制数据');
+      return;
+    }
+    if (index == 0) {
+      if (currentProjectId != null && isSelfPost) {
+        showSaveExitedProjectSheet();
+      } else {
+        if (!isSelfPost) {
+          currentProjectId = null;
+          currentProjectTitle = null;
+        }
+        saveProject();
+      }
+    } else if (index == 1) {
+      final settings = await CreateShareSettingDialog.show();
+      if (settings == null) return;
+      await saveImage(
+        showText: settings[0],
+        showGrid: settings[1],
+        showNumberBorder: settings[2],
+        showBoldGrid: settings[3],
+        showColorLegend: settings[4],
+      );
+    }
   }
 
   /// 保存/更新作品后退出画板（弹标题、刷新作品列表）
@@ -959,29 +1015,7 @@ class PixelizeResultController extends BaseController
 
   /// 导出图片到相册
   Future<void> exportImage() async {
-    if (_isBlankCanvas()) {
-      showToast('请先绘制数据');
-      return;
-    }
-    final settings = await AppOverlay.dialog.customAsync<List<bool>>(
-      child: CreateShareSettingDialog(
-      items: [
-        SwitchItemData(title: '显示颜色代码', value: true),
-        SwitchItemData(title: '显示网格线', value: true),
-        SwitchItemData(title: '显示网格编号'),
-        SwitchItemData(title: '显示网格覆盖'),
-        SwitchItemData(title: '显示使用的颜色'),
-      ],
-    ),
-    );
-    if (settings == null || settings.length != 5) return;
-    await saveImage(
-      showText: settings[0],
-      showGrid: settings[1],
-      showNumberBorder: settings[2],
-      showBoldGrid: settings[3],
-      showColorLegend: settings[4],
-    );
+    titleOption(1);
   }
 
   /// 保存已存在缓存的项目
@@ -3420,34 +3454,9 @@ class PixelizeResultController extends BaseController
     await _remapColorsToNewBrand();
   }
 
-  /// RGB → CIE Lab 色彩空间转换（用于感知相似度计算）
-  ///
-  /// CIE Lab 将颜色分解为 L（亮度）、a（红-绿轴）、b（蓝-黄轴），
-  /// 在此空间中的欧氏距离（Delta E）与人眼感知高度一致。
-  static List<double> _rgbToLab(int r, int g, int b) {
-    // Step 1: sRGB → 线性 RGB（gamma 解压）
-    double fn(num c) {
-      final s = c / 255.0;
-      return (s > 0.04045 ? pow((s + 0.055) / 1.055, 2.4) : s / 12.92)
-          .toDouble();
-    }
-
-    final rL = fn(r), gL = fn(g), bL = fn(b);
-
-    // Step 2: 线性 RGB → XYZ（sRGB 标准 illuminant D65）
-    final x = rL * 0.4124 + gL * 0.3576 + bL * 0.1805;
-    final y = rL * 0.2126 + gL * 0.7152 + bL * 0.0722;
-    final z = rL * 0.0193 + gL * 0.1192 + bL * 0.9505;
-
-    // Step 3: XYZ → Lab
-    double f(num t) =>
-        (t > 0.008856 ? pow(t, 1 / 3) : t * 7.787 + 16 / 116).toDouble();
-    final fx = f(x / 0.95047);
-    final fy = f(y / 1.00000);
-    final fz = f(z / 1.08883);
-
-    return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
-  }
+  /// RGB → CIE Lab（委托 ColorDelta）
+  static List<double> _rgbToLab(int r, int g, int b) =>
+      ColorDelta.rgbToLab(r, g, b);
 
   /// 品牌切换：基于原始RGB快照 + 用户编辑差量的 CIE Lab 相似色映射
   ///
@@ -3538,12 +3547,12 @@ class PixelizeResultController extends BaseController
         String? bestCode;
 
         for (final nc in newBrandColorsLab) {
-          final dL = oldLab[0] - nc[1];
-          final da = oldLab[1] - nc[2];
-          final db = oldLab[2] - nc[3];
-          final dist = dL * dL + da * da + db * db;
-          if (dist < minDist) {
-            minDist = dist;
+          final de = ColorDelta.deltaE00FromLab(
+            oldLab,
+            [nc[1] as double, nc[2] as double, nc[3] as double],
+          );
+          if (de < minDist) {
+            minDist = de;
             bestCode = nc[0].toString();
           }
         }
@@ -3618,28 +3627,15 @@ class PixelizeResultController extends BaseController
       debugPrint('[减色处理] 当前使用颜色数: ${colorCount.length}');
 
       if (colorCount.length <= limitValue || limitValue == -1) {
-        // 当前颜色数已不超过限制（或 unlimited），无需处理
         debugPrint('[减色处理] 颜色数已在限制内，无需合并');
-        // showToast('已应用新的减色选项');
         return;
       }
 
-      // 2. 按使用频率降序排列，取前 N 个作为锚点颜色
-      final sortedEntries = colorCount.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
-      final anchorCodes =
-          sortedEntries.take(limitValue).map((e) => e.key).toSet();
-      final mergeCodes =
-          sortedEntries.skip(limitValue).map((e) => e.key).toSet();
-      debugPrint('[减色处理] 锚点颜色(${anchorCodes.length}): $anchorCodes');
-      debugPrint('[减色处理] 待合并颜色(${mergeCodes.length}): $mergeCodes');
-
-      // 3. 预计算所有相关颜色的 CIE Lab 值
-      final labCache = <String, List<double>>{};
-      for (final code in anchorCodes.union(mergeCodes)) {
+      final labByCode = <String, List<double>>{};
+      for (final code in colorCount.keys) {
         final c = _beadColorMap[code];
         if (c != null) {
-          labCache[code] = _rgbToLab(
+          labByCode[code] = _rgbToLab(
             (c.r * 255).round(),
             (c.g * 255).round(),
             (c.b * 255).round(),
@@ -3647,43 +3643,17 @@ class PixelizeResultController extends BaseController
         }
       }
 
-      // 4. 为每个待合并颜色找最近似的锚点色
-      final mergeMapping = <String, String>{};
-      for (final code in mergeCodes) {
-        final oldLab = labCache[code];
-        if (oldLab == null) continue;
-
-        double minDist = double.maxFinite;
-        String? bestAnchor;
-
-        for (final anchor in anchorCodes) {
-          final anchorLab = labCache[anchor];
-          if (anchorLab == null) continue;
-
-          final dL = oldLab[0] - anchorLab[0];
-          final da = oldLab[1] - anchorLab[1];
-          final db = oldLab[2] - anchorLab[2];
-          final dist = dL * dL + da * da + db * db;
-          if (dist < minDist) {
-            minDist = dist;
-            bestAnchor = anchor;
-          }
-        }
-
-        if (bestAnchor != null) {
-          mergeMapping[code] = bestAnchor!;
-        }
-      }
+      final mergeMapping = ColorMergeUtil.buildMergeMapping(
+        colorCount: colorCount,
+        labByCode: labByCode,
+        maxColors: limitValue,
+      );
       debugPrint('[减色处理] 合并映射: $mergeMapping');
 
-      // 5. 批量替换 pixelCodes
-      int mergedCount = 0;
-      for (int i = 0; i < pixelCodes.length; i++) {
-        final code = pixelCodes[i];
-        if (code.isNotEmpty && mergeMapping.containsKey(code)) {
-          pixelCodes[i] = mergeMapping[code]!;
-          mergedCount++;
-        }
+      final codes = List<String>.from(pixelCodes);
+      final mergedCount = ColorMergeUtil.applyMapping(codes, mergeMapping);
+      if (mergedCount > 0) {
+        pixelCodes.value = codes;
       }
       pixelCodes.refresh();
       debugPrint('[减色处理] 已合并 $mergedCount 个像素');

@@ -9,6 +9,15 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'color_delta.dart';
+import 'merge_intensity.dart';
+import 'pixel_post_processor.dart';
+import 'color_merge_util.dart';
+import 'color_cluster_util.dart';
+import 'pixel_subject_mask.dart';
+
+export 'merge_intensity.dart';
+
 /// 像素化分割枚举
 enum GridSize {
   size16x16(16, 16, '16×16'),
@@ -59,8 +68,8 @@ enum ColorLimit {
   max128(128, '最多128色'),
   max64(64, '最多64色'),
   max32(32, '最多32色'),
-  max16(16, '最多16色'),
-  max8(8, '最多8色');
+  max16(16, '16色'),
+  max8(8, '8色');
 
   final int limit;
   final String label;
@@ -105,7 +114,7 @@ class _BeadColor {
   });
 
   /// 获取 CIE Lab 值（首次调用时计算并缓存，后续直接返回）
-  List<double> get lab => _lab ??= _rgbToLab(r, g, b);
+  List<double> get lab => _lab ??= ColorDelta.rgbToLab(r, g, b);
 
   /// 从十六进制颜色值创建珠子颜色
   factory _BeadColor.fromHex(String hex, String code) {
@@ -144,6 +153,9 @@ class _PixelizeParams {
   /// AI生图非正方形网格适配模式，默认 none
   final AiGridFitMode aiGridFitMode;
 
+  /// 合并强度（ΔE00 阈值档位）
+  final MergeIntensity mergeIntensity;
+
   _PixelizeParams({
     required this.imageBytes,
     required this.gridWidth,
@@ -153,89 +165,74 @@ class _PixelizeParams {
     required this.colorLimit,
     required this.brandSuffix,
     this.aiGridFitMode = AiGridFitMode.none,
+    this.mergeIntensity = MergeIntensity.medium,
   });
 }
 
-/// 计算颜色的饱和度 (0.0 - 1.0)
-double _getSaturation(int r, int g, int b) {
-  final max = [r, g, b].reduce((a, b) => a > b ? a : b).toDouble();
-  final min = [r, g, b].reduce((a, b) => a < b ? a : b).toDouble();
-  if (max == 0) return 0;
-  return (max - min) / max;
+/// RGB → CIE Lab（委托 ColorDelta）
+List<double> _rgbToLab(int r, int g, int b) => ColorDelta.rgbToLab(r, g, b);
+
+/// CIEDE2000 (ΔE00) between two Lab values
+double _labDistFromValues(List<double> lab1, List<double> lab2) =>
+    ColorDelta.deltaE00FromLab(lab1, lab2);
+
+/// 从珠色映射构建 RGB 查找表（供后处理使用）
+Map<String, ({int r, int g, int b})> _beadRgbMap(
+  Map<String, _BeadColor> beadColorMap,
+) {
+  return {
+    for (final e in beadColorMap.entries)
+      e.key: (r: e.value.r, g: e.value.g, b: e.value.b),
+  };
 }
 
-/// RGB → CIE Lab 色彩空间转换（用于感知相似度计算）
-///
-/// CIE Lab 将颜色分解为 L（亮度）、a（红-绿轴）、b（蓝-黄轴），
-/// 在此空间中的欧氏距离（Delta E 76）与人眼感知高度一致。
-List<double> _rgbToLab(int r, int g, int b) {
-  // Step 1: sRGB → 线性 RGB（gamma 解压）
-  double fn(num c) {
-    final s = c / 255.0;
-    return (s > 0.04045 ? pow((s + 0.055) / 1.055, 2.4) : s / 12.92).toDouble();
-  }
-  final rL = fn(r), gL = fn(g), bL = fn(b);
-
-  // Step 2: 线性 RGB → XYZ（sRGB 标准 illuminant D65）
-  final x = rL * 0.4124 + gL * 0.3576 + bL * 0.1805;
-  final y = rL * 0.2126 + gL * 0.7152 + bL * 0.0722;
-  final z = rL * 0.0193 + gL * 0.1192 + bL * 0.9505;
-
-  // Step 3: XYZ → Lab
-  double f(num t) => (t > 0.008856 ? pow(t, 1 / 3) : t * 7.787 + 16 / 116).toDouble();
-  final fx = f(x / 0.95047);
-  final fy = f(y / 1.00000);
-  final fz = f(z / 1.08883);
-
-  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+/// 用矩形填充网格块（比逐像素 setPixelRgba 快得多）
+void _fillGridBlock(
+  img.Image image,
+  int startX,
+  int startY,
+  int endX,
+  int endY,
+  _BeadColor color,
+) {
+  if (endX <= startX || endY <= startY) return;
+  img.fillRect(
+    image,
+    x1: startX,
+    y1: startY,
+    x2: endX - 1,
+    y2: endY - 1,
+    color: img.ColorRgb8(color.r, color.g, color.b),
+  );
 }
 
-/// 计算两个颜色的 CIE Lab Delta E 76 距离（感知色彩差异）
-/// 返回值越小表示颜色越接近，与人眼感知高度一致
-/// 注意：在核心流程中优先使用 _labDistFromValues + _BeadColor.lab 缓存以避免重复计算
-double _labDeltaE(int r1, int g1, int b1, int r2, int g2, int b2) {
-  final lab1 = _rgbToLab(r1, g1, b1);
-  final lab2 = _rgbToLab(r2, g2, b2);
-  return _labDistFromValues(lab1, lab2);
-}
-
-/// 从已计算的 CIE Lab 值直接计算 Delta E（避免重复转换）
-double _labDistFromValues(List<double> lab1, List<double> lab2) {
-  final dL = lab1[0] - lab2[0];
-  final da = lab1[1] - lab2[1];
-  final db = lab1[2] - lab2[2];
-  return dL * dL + da * da + db * db; // 返回平方值用于比较，避免 sqrt 开销
-}
-
-/// 计算两个颜色之间的加权欧几里得距离
-/// 使用感知权重 + 饱和度惩罚，避免模糊区域映射到偏灰颜色
-@Deprecated('建议使用 _labDeltaE (CIE Lab Delta E) 替代，感知一致性更好')
-double _colorDistance(int r1, int g1, int b1, int r2, int g2, int b2) {
-  final dr = r1 - r2;
-  final dg = g1 - g2;
-  final db = b1 - b2;
-  // 感知加权：红色*2, 绿色*4, 蓝色*3
-  double distance = (2.0 * dr * dr + 4.0 * dg * dg + 3.0 * db * db);
-
-  // 计算饱和度
-  final sat1 = _getSaturation(r1, g1, b1);
-  final sat2 = _getSaturation(r2, g2, b2);
-  
-  // 饱和度差异惩罚
-  // 当原图颜色有较高饱和度时，如果候选颜色饱和度低（偏灰），增加惩罚
-  if (sat1 > 0.15 && sat2 < sat1) {
-    // 原图有色，候选偏灰，增加惩罚
-    final satPenalty = (sat1 - sat2) * 8000; // 惩罚系数
-    distance += satPenalty;
-  }
-  
-  // 如果原图是低饱和度（灰色区域），候选也是低饱和度时，稍微降低惩罚
-  // 这样可以避免灰色区域被强制匹配到有色颜色
-  if (sat1 < 0.1 && sat2 < 0.1) {
-    distance *= 0.8; // 减少距离，允许匹配灰色
-  }
-
-  return distance;
+/// 执行连通块后处理（孤立杂色 + 微小色块 + 细节保护）
+void _runPostProcess(
+  List<String> gridCodes,
+  int gridWidth,
+  int gridHeight,
+  Map<String, _BeadColor> beadColorMap,
+  MergeIntensity intensity,
+  img.Image image,
+  List<int> xGridLines,
+  List<int> yGridLines, {
+  int targetGridW = 0,
+  int offsetX = 0,
+  int offsetY = 0,
+}) {
+  PixelPostProcessor.apply(
+    gridCodes: gridCodes,
+    gridWidth: gridWidth,
+    gridHeight: gridHeight,
+    colorRgbByCode: _beadRgbMap(beadColorMap),
+    intensity: intensity,
+    image: image,
+    xGridLines: xGridLines,
+    yGridLines: yGridLines,
+    targetGridW: targetGridW,
+    offsetX: offsetX,
+    offsetY: offsetY,
+  );
 }
 
 /// 计算网格格在 gridCodes 中的索引（支持居中适配偏移）
@@ -249,144 +246,6 @@ int _gridCellIndex(
 }) {
   final effectiveW = targetGridW > 0 ? targetGridW : gridWidth;
   return (row + offsetY) * effectiveW + (col + offsetX);
-}
-
-/// 将单个网格格的颜色写回 gridCodes 并同步预览图
-void _paintGridCell(
-  List<String> gridCodes,
-  int row,
-  int col,
-  String code,
-  int gridWidth,
-  int gridHeight,
-  img.Image image,
-  List<int> xGridLines,
-  List<int> yGridLines,
-  Map<String, _BeadColor> beadColorMap, {
-  int targetGridW = 0,
-  int offsetX = 0,
-  int offsetY = 0,
-}) {
-  final index = _gridCellIndex(
-    row,
-    col,
-    gridWidth: gridWidth,
-    targetGridW: targetGridW,
-    offsetX: offsetX,
-    offsetY: offsetY,
-  );
-  gridCodes[index] = code;
-
-  final beadColor = beadColorMap[code];
-  if (beadColor == null) return;
-
-  final startX = xGridLines[col];
-  final startY = yGridLines[row];
-  final endX = xGridLines[col + 1];
-  final endY = yGridLines[row + 1];
-
-  for (int y = startY; y < endY; y++) {
-    for (int x = startX; x < endX; x++) {
-      image.setPixelRgba(x, y, beadColor.r, beadColor.g, beadColor.b, 255);
-    }
-  }
-}
-
-/// 空间平滑：清除 3×3 邻域中的孤立杂色格
-///
-/// 当当前格色号在 8 邻居中同名出现 ≤1 次，且存在足够强的邻居主流色时，替换为主流色。
-/// 边缘/角落格按有效邻居数自适应降低主流色阈值。
-void _applySpatialSmoothing(
-  List<String> gridCodes,
-  int gridWidth,
-  int gridHeight,
-  img.Image image,
-  List<int> xGridLines,
-  List<int> yGridLines,
-  Map<String, _BeadColor> beadColorMap, {
-  int targetGridW = 0,
-  int offsetX = 0,
-  int offsetY = 0,
-}) {
-  String codeAt(int row, int col) {
-    if (row < 0 || row >= gridHeight || col < 0 || col >= gridWidth) {
-      return '';
-    }
-    return gridCodes[_gridCellIndex(
-      row,
-      col,
-      gridWidth: gridWidth,
-      targetGridW: targetGridW,
-      offsetX: offsetX,
-      offsetY: offsetY,
-    )];
-  }
-
-  final replacements = <List<dynamic>>[];
-
-  for (int row = 0; row < gridHeight; row++) {
-    for (int col = 0; col < gridWidth; col++) {
-      final current = codeAt(row, col);
-      if (current.isEmpty) continue;
-
-      final neighborCounts = <String, int>{};
-      var validNeighbors = 0;
-
-      for (int dr = -1; dr <= 1; dr++) {
-        for (int dc = -1; dc <= 1; dc++) {
-          if (dr == 0 && dc == 0) continue;
-          final nc = codeAt(row + dr, col + dc);
-          if (nc.isEmpty) continue;
-          validNeighbors++;
-          neighborCounts[nc] = (neighborCounts[nc] ?? 0) + 1;
-        }
-      }
-
-      if (validNeighbors < 3) continue;
-
-      String? majorityCode;
-      var majorityCount = 0;
-      for (final entry in neighborCounts.entries) {
-        if (entry.value > majorityCount) {
-          majorityCount = entry.value;
-          majorityCode = entry.key;
-        }
-      }
-
-      if (majorityCode == null || majorityCode == current) continue;
-
-      final sameAmongNeighbors = neighborCounts[current] ?? 0;
-      final requiredMajority = validNeighbors >= 6
-          ? 5
-          : validNeighbors >= 4
-              ? 3
-              : 2;
-
-      if (sameAmongNeighbors <= 1 && majorityCount >= requiredMajority) {
-        replacements.add([row, col, majorityCode]);
-      }
-    }
-  }
-
-  for (final item in replacements) {
-    _paintGridCell(
-      gridCodes,
-      item[0] as int,
-      item[1] as int,
-      item[2] as String,
-      gridWidth,
-      gridHeight,
-      image,
-      xGridLines,
-      yGridLines,
-      beadColorMap,
-      targetGridW: targetGridW,
-      offsetX: offsetX,
-      offsetY: offsetY,
-    );
-  }
-
-  debugPrint('[空间平滑] 清除孤立杂色格: ${replacements.length}');
 }
 
 /// Isolate 返回结果类
@@ -406,290 +265,21 @@ class _PixelizeResult {
   });
 }
 
-/// 移除噪点颜色（优化版 v2）
-/// 特性：
-/// 1. CIE Lab 颜色相似性：使用 Delta E 76 感知距离，与品牌切换/减色保持一致
-/// 2. 中心保护：中心区域阈值更高（更宽容），保护主体细节不被误删
-/// 3. 边缘激进：边缘区域阈值更低（更严格），清理背景散落噪点
-/// 4. 替换色缓存：每种噪点色只做一次全局搜索，避免重复计算
-/// 5. 迭代处理：处理新产生的孤立噪点
-void _removeNoiseColors(
-  List<String> gridCodes,
-  int gridWidth,
-  int gridHeight,
-  Map<String, int> colorFrequency,
-  img.Image image,
-  List<int> xGridLines,
-  List<int> yGridLines,
-  Map<String, _BeadColor> beadColorMap, {
-  bool isSmallGrid = false,
-  int targetGridW = 0, // 完整目标网格宽（用于居中适配场景）
-  int offsetX = 0,
-  int offsetY = 0,
-}) {
-  final totalBlocks = gridWidth * gridHeight;
-  final centerRow = gridHeight / 2;
-  final centerCol = gridWidth / 2;
-  final maxDistance = sqrt(centerRow * centerRow + centerCol * centerCol);
 
-  // 基础噪点阈值：根据网格大小动态调整
-  int baseThreshold;
-  if (isSmallGrid) {
-    baseThreshold = (totalBlocks * 0.001).ceil().clamp(1, 3);
-  } else {
-    baseThreshold = (totalBlocks * 0.003).ceil().clamp(2, 10);
-  }
-
-  int totalProcessed = 0;
-  int iteration = 0;
-  const maxIterations = 5;
-
-  // 迭代处理，直到没有新噪点产生
-  while (iteration < maxIterations) {
-    iteration++;
-    int processedThisRound = 0;
-
-    // 重新统计颜色频率
-    colorFrequency.clear();
-    for (final code in gridCodes) {
-      if (code.isNotEmpty) {
-        colorFrequency[code] = (colorFrequency[code] ?? 0) + 1;
-      }
-    }
-
-    // 找出当前迭代的噪点颜色（使用动态阈值）
-    final noiseColors = <String>{};
-    for (final entry in colorFrequency.entries) {
-      // 基础阈值检查
-      if (entry.value <= baseThreshold) {
-        noiseColors.add(entry.key);
-      }
-    }
-
-    if (noiseColors.isEmpty) break;
-
-    debugPrint('[噪点过滤] 第$iteration轮，发现 ${noiseColors.length} 种噪点颜色（基础阈值: $baseThreshold）');
-
-    // [P4] CIE Lab 预计算缓存：本轮涉及的所有颜色只转换一次，避免重复 gamma/cube-root 计算
-    final labCache = <String, List<double>>{};
-    for (final code in colorFrequency.keys) {
-      final bc = beadColorMap[code];
-      if (bc != null) {
-        labCache[code] = _rgbToLab(bc.r, bc.g, bc.b);
-      }
-    }
-
-    // 距离辅助函数：从预计算的 Lab 值直接算 Delta E（跳过重复的 RGB→Lab 转换）
-    double labDist(String codeA, String codeB) {
-      final labA = labCache[codeA];
-      final labB = labCache[codeB];
-      if (labA == null || labB == null) return double.infinity;
-      final dL = labA[0] - labB[0];
-      final da = labA[1] - labB[1];
-      final db = labA[2] - labB[2];
-      return dL * dL + da * da + db * db;
-    }
-
-    // [P1] 噪点色 → 最佳替换色 缓存（避免同一种噪点色的所有像素重复全局搜索）
-    final noiseReplaceCache = <String, String>{};
-
-    // 处理每个噪点块
-    for (int row = 0; row < gridHeight; row++) {
-      for (int col = 0; col < gridWidth; col++) {
-        // 居中适配时，映射到完整目标网格的索引
-        final effectiveW = targetGridW > 0 ? targetGridW : gridWidth;
-        final index = (row + offsetY) * effectiveW + (col + offsetX);
-        final currentCode = gridCodes[index];
-
-        if (!noiseColors.contains(currentCode)) continue;
-
-        // 计算中心距离因子（0-1，中心为1，边缘为0）
-        final distanceFromCenter = sqrt(
-          (row - centerRow) * (row - centerRow) +
-          (col - centerCol) * (col - centerCol)
-        );
-        final centerFactor = 1.0 - (distanceFromCenter / maxDistance);
-
-        // [P2 修复] 动态阈值：中心保护（阈值更高→更宽容），边缘激进（阈值更低→更严格）
-        //
-        //   位置     | centerFactor | localThreshold         | 效果
-        //   ----------|-------------|------------------------|-------------
-        //   中心(~1.0)| ~1.0        | baseThreshold × 2.0   | 需要更多出现次数才保留（保护细节）
-        //   边缘(~0.0)| ~0.0        | baseThreshold × 1.0   | 少量出现即被清除（激进清理）
-        final localThreshold = (baseThreshold * (1.0 + centerFactor)).ceil();
-
-        // 检查当前块是否超过动态阈值（中心区域可能不被视为噪点）
-        if (colorFrequency[currentCode]! > localThreshold) {
-          continue; // 中心区域保护，跳过
-        }
-
-        // 获取当前噪点颜色对象
-        final currentColor = beadColorMap[currentCode];
-        if (currentColor == null) continue;
-
-        // [P1] 先查缓存：同种噪点色已找到过最佳替换色则直接复用
-        final cached = noiseReplaceCache[currentCode];
-        if (cached != null) {
-          final newColor = beadColorMap[cached];
-          if (newColor != null) {
-            gridCodes[index] = cached;
-            // 更新图片
-            final startX = xGridLines[col];
-            final startY = yGridLines[row];
-            final endX = xGridLines[col + 1];
-            final endY = yGridLines[row + 1];
-            for (int y = startY; y < endY; y++) {
-              for (int x = startX; x < endX; x++) {
-                image.setPixelRgba(x, y, newColor.r, newColor.g, newColor.b, 255);
-              }
-            }
-            processedThisRound++;
-            continue;
-          }
-        }
-
-        // 未命中缓存，执行三级查找（使用 CIE Lab Delta E 距离）
-        String? bestReplacement;
-        double minColorDistance = double.infinity;
-
-        // 第一优先：相邻非噪点颜色中颜色最接近的
-        for (int dr = -1; dr <= 1; dr++) {
-          for (int dc = -1; dc <= 1; dc++) {
-            if (dr == 0 && dc == 0) continue;
-            final nr = row + dr;
-            final nc = col + dc;
-            if (nr < 0 || nr >= gridHeight || nc < 0 || nc >= gridWidth) continue;
-
-            final neighborIndex = _gridCellIndex(
-              nr,
-              nc,
-              gridWidth: gridWidth,
-              targetGridW: targetGridW,
-              offsetX: offsetX,
-              offsetY: offsetY,
-            );
-            final neighborCode = gridCodes[neighborIndex];
-            if (neighborCode.isEmpty || noiseColors.contains(neighborCode)) continue;
-
-            final neighborColor = beadColorMap[neighborCode];
-            if (neighborColor == null) continue;
-
-            // [P0/P4] 使用预计算 CIE Lab Delta E（避免重复 RGB→Lab 转换）
-            final distance = labDist(currentCode, neighborCode);
-
-            if (distance < minColorDistance) {
-              minColorDistance = distance;
-              bestReplacement = neighborCode;
-            }
-          }
-        }
-
-        // 第二优先：如果周围全是噪点，扩大搜索范围到5x5
-        if (bestReplacement == null) {
-          for (int dr = -2; dr <= 2; dr++) {
-            for (int dc = -2; dc <= 2; dc++) {
-              if (dr == 0 && dc == 0) continue;
-              if (dr.abs() == 1 && dc.abs() == 1) continue; // 已搜索过
-              final nr = row + dr;
-              final nc = col + dc;
-              if (nr < 0 || nr >= gridHeight || nc < 0 || nc >= gridWidth) continue;
-
-              final neighborIndex = _gridCellIndex(
-                nr,
-                nc,
-                gridWidth: gridWidth,
-                targetGridW: targetGridW,
-                offsetX: offsetX,
-                offsetY: offsetY,
-              );
-              final neighborCode = gridCodes[neighborIndex];
-              if (neighborCode.isEmpty || noiseColors.contains(neighborCode)) continue;
-
-              final neighborColor = beadColorMap[neighborCode];
-              if (neighborColor == null) continue;
-
-              final distance = labDist(currentCode, neighborCode);
-
-              if (distance < minColorDistance) {
-                minColorDistance = distance;
-                bestReplacement = neighborCode;
-              }
-            }
-          }
-        }
-
-        // 第三优先：如果仍然没找到，选择全局颜色最接近的非噪点颜色
-        if (bestReplacement == null) {
-          for (final entry in colorFrequency.entries) {
-            if (noiseColors.contains(entry.key)) continue;
-            final candidateColor = beadColorMap[entry.key];
-            if (candidateColor == null) continue;
-
-            final distance = labDist(currentCode, entry.key);
-
-            if (distance < minColorDistance) {
-              minColorDistance = distance;
-              bestReplacement = entry.key;
-            }
-          }
-        }
-
-        if (bestReplacement == null) continue;
-
-        // [P1] 写入缓存，供后续同种噪点色像素直接复用
-        noiseReplaceCache[currentCode] = bestReplacement;
-
-        final newColor = beadColorMap[bestReplacement];
-        if (newColor == null) continue;
-
-        // 更新 gridCodes
-        gridCodes[index] = bestReplacement;
-
-        // 更新图片
-        final startX = xGridLines[col];
-        final startY = yGridLines[row];
-        final endX = xGridLines[col + 1];
-        final endY = yGridLines[row + 1];
-
-        for (int y = startY; y < endY; y++) {
-          for (int x = startX; x < endX; x++) {
-            image.setPixelRgba(x, y, newColor.r, newColor.g, newColor.b, 255);
-          }
-        }
-
-        processedThisRound++;
-      }
-    }
-
-    totalProcessed += processedThisRound;
-
-    // 如果本轮没有处理任何噪点，退出迭代
-    if (processedThisRound == 0) break;
-
-    debugPrint('[噪点过滤] 第$iteration轮处理了 $processedThisRound 个噪点块');
-  }
-
-  // 最终更新颜色频率统计
-  colorFrequency.clear();
-  for (final code in gridCodes) {
-    if (code.isNotEmpty) {
-      colorFrequency[code] = (colorFrequency[code] ?? 0) + 1;
-    }
-  }
-
-  debugPrint('[噪点过滤] 完成，共处理 $totalProcessed 个噪点块，迭代 $iteration 轮');
-}
-
-/// 计算指定区域的平均色（优化版：根据网格大小采用不同策略）
-/// 大网格：使用中位数过滤异常值 + 中心加权
-/// 小网格：使用高斯加权减少边缘像素影响
+/// 计算指定区域的代表色（边界格用主色，内部格用中位数/加权平均）
 _Color _calculateAverageColor(
   img.Image image,
   int startX,
   int startY,
   int width,
-  int height,
-) {
+  int height, {
+  bool? isBoundary,
+}) {
+  // 跨色边界格：主色采样，避免均值/中位数把描边与填充混在一起
+  if (isBoundary ?? _isBoundaryBlock(image, startX, startY, width, height)) {
+    return _calculateDominantBlockColor(image, startX, startY, width, height);
+  }
+
   // 判断是否为大网格块（像素数 > 400，约 20×20 以上）
   final pixelCount = width * height;
   final isLargeBlock = pixelCount > 400;
@@ -701,6 +291,169 @@ _Color _calculateAverageColor(
 
   // 小网格策略：加权平均
   return _calculateSmallBlockColor(image, startX, startY, width, height);
+}
+
+/// 块内是否存在两个占比显著且对比明显的主色（跨色边界）
+bool _isBoundaryBlock(
+  img.Image image,
+  int startX,
+  int startY,
+  int width,
+  int height,
+) {
+  final counts = <int, int>{};
+  var total = 0;
+
+  for (int y = startY; y < startY + height; y++) {
+    for (int x = startX; x < startX + width; x++) {
+      if (x >= image.width || y >= image.height) continue;
+      final pixel = image.getPixel(x, y);
+      final key = _quantizeRgbKey(
+        pixel.r.toInt(),
+        pixel.g.toInt(),
+        pixel.b.toInt(),
+      );
+      counts[key] = (counts[key] ?? 0) + 1;
+      total++;
+    }
+  }
+
+  if (total < 4 || counts.length < 2) return false;
+
+  final sorted = counts.entries.toList()
+    ..sort((a, b) => b.value.compareTo(a.value));
+
+  final top1Share = sorted[0].value / total;
+  final top2Share = sorted[1].value / total;
+  if (top1Share < 0.28 || top2Share < 0.18) return false;
+
+  final lab1 = _labFromQuantizedKey(sorted[0].key);
+  final lab2 = _labFromQuantizedKey(sorted[1].key);
+  // ΔE76 > 12：两种主色有足够对比，视为轮廓/边界格
+  return ColorDelta.deltaE76SqFromLab(lab1, lab2) > 144;
+}
+
+/// 5-bit 量化 RGB → 单一 int key
+int _quantizeRgbKey(int r, int g, int b) =>
+    ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+
+List<double> _labFromQuantizedKey(int key) {
+  final r = ((key >> 10) & 0x1F) << 3;
+  final g = ((key >> 5) & 0x1F) << 3;
+  final b = (key & 0x1F) << 3;
+  return ColorDelta.rgbToLab(r | 4, g | 4, b | 4);
+}
+
+/// 边界格主色：取块内占比最高的量化色桶，再对该桶内像素求均值
+_Color _calculateDominantBlockColor(
+  img.Image image,
+  int startX,
+  int startY,
+  int width,
+  int height,
+) {
+  final counts = <int, int>{};
+
+  for (int y = startY; y < startY + height; y++) {
+    for (int x = startX; x < startX + width; x++) {
+      if (x >= image.width || y >= image.height) continue;
+      final pixel = image.getPixel(x, y);
+      final key = _quantizeRgbKey(
+        pixel.r.toInt(),
+        pixel.g.toInt(),
+        pixel.b.toInt(),
+      );
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+  }
+
+  if (counts.isEmpty) {
+    return const _Color(r: 0, g: 0, b: 0);
+  }
+
+  final total = counts.values.fold<int>(0, (a, b) => a + b);
+  var dominantKey = counts.keys.first;
+  var maxCount = 0;
+  for (final entry in counts.entries) {
+    if (entry.value > maxCount) {
+      maxCount = entry.value;
+      dominantKey = entry.key;
+    }
+  }
+
+  // 黑线描边：抗锯齿会让灰色像素占多数，优先取占比足够的最深色桶
+  final strokeKey = _resolveDarkStrokeBucket(counts, total);
+  if (strokeKey != null) {
+    dominantKey = strokeKey;
+  }
+
+  double r = 0;
+  double g = 0;
+  double b = 0;
+  var n = 0;
+
+  for (int y = startY; y < startY + height; y++) {
+    for (int x = startX; x < startX + width; x++) {
+      if (x >= image.width || y >= image.height) continue;
+      final pixel = image.getPixel(x, y);
+      final pr = pixel.r.toInt();
+      final pg = pixel.g.toInt();
+      final pb = pixel.b.toInt();
+      if (_quantizeRgbKey(pr, pg, pb) != dominantKey) continue;
+      r += pr;
+      g += pg;
+      b += pb;
+      n++;
+    }
+  }
+
+  if (n == 0) {
+    final qr = ((dominantKey >> 10) & 0x1F) << 3;
+    final qg = ((dominantKey >> 5) & 0x1F) << 3;
+    final qb = (dominantKey & 0x1F) << 3;
+    return _Color(r: (qr | 4).toDouble(), g: (qg | 4).toDouble(), b: (qb | 4).toDouble());
+  }
+
+  return _Color(r: r / n, g: g / n, b: b / n);
+}
+
+/// 深色描边桶：深/浅双峰时取深色侧；或取占比足够的极深色桶
+int? _resolveDarkStrokeBucket(Map<int, int> counts, int total) {
+  if (counts.length < 2 || total == 0) return null;
+
+  final sorted = counts.entries.toList()
+    ..sort((a, b) => b.value.compareTo(a.value));
+
+  final top = sorted.take(4).toList();
+  for (int i = 0; i < top.length; i++) {
+    for (int j = i + 1; j < top.length; j++) {
+      final labA = _labFromQuantizedKey(top[i].key);
+      final labB = _labFromQuantizedKey(top[j].key);
+
+      final darkEntry = labA[0] <= labB[0] ? top[i] : top[j];
+      final lightEntry = labA[0] <= labB[0] ? top[j] : top[i];
+      final darkLab = labA[0] <= labB[0] ? labA : labB;
+      final lightLab = labA[0] <= labB[0] ? labB : labA;
+
+      if (darkLab[0] > 42 || lightLab[0] < 48) continue;
+      if (ColorDelta.deltaE76SqFromLab(darkLab, lightLab) < 144) continue;
+      if (darkEntry.value / total < 0.10) continue;
+
+      return darkEntry.key;
+    }
+  }
+
+  int? darkestKey;
+  var darkestL = double.infinity;
+  for (final entry in counts.entries) {
+    if (entry.value / total < 0.08) continue;
+    final lab = _labFromQuantizedKey(entry.key);
+    if (lab[0] < 32 && lab[0] < darkestL) {
+      darkestL = lab[0];
+      darkestKey = entry.key;
+    }
+  }
+  return darkestKey;
 }
 
 /// 大网格块颜色计算：使用中位数 + 中心加权
@@ -747,6 +500,129 @@ _Color _calculateLargeBlockColor(
     g: gValues[mid].toDouble(),
     b: bValues[mid].toDouble(),
   );
+}
+
+/// 3×3 中值滤波（轻量去 JPEG/毛发噪点，保留大结构）
+img.Image _medianFilter3x3(img.Image source) {
+  final out = img.Image.from(source);
+  if (source.width < 3 || source.height < 3) return out;
+
+  for (int y = 1; y < source.height - 1; y++) {
+    for (int x = 1; x < source.width - 1; x++) {
+      final rs = <int>[];
+      final gs = <int>[];
+      final bs = <int>[];
+      for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+          final p = source.getPixel(x + dx, y + dy);
+          rs.add(p.r.toInt());
+          gs.add(p.g.toInt());
+          bs.add(p.b.toInt());
+        }
+      }
+      rs.sort();
+      gs.sort();
+      bs.sort();
+      out.setPixelRgb(x, y, rs[4], gs[4], bs[4]);
+    }
+  }
+  return out;
+}
+
+/// 内部格四邻域多数票：映射后第一时间消除渐变区跳色
+int _applyInteriorSpatialVote({
+  required List<String> gridCodes,
+  required int gridWidth,
+  required int gridHeight,
+  required Map<String, _BeadColor> beadColorMap,
+  required Set<int> boundaryGridIndices,
+  required img.Image pixelizedImage,
+  required List<int> xGridLines,
+  required List<int> yGridLines,
+  int targetGridW = 0,
+  int offsetX = 0,
+  int offsetY = 0,
+  double mergeThreshold = 6.0,
+}) {
+  final labCache = <String, List<double>>{
+    for (final e in beadColorMap.entries) e.key: e.value.lab,
+  };
+  final roles = PixelSubjectMask.compute(
+    gridCodes: gridCodes,
+    gridWidth: gridWidth,
+    gridHeight: gridHeight,
+    labCache: labCache,
+    targetGridW: targetGridW,
+    offsetX: offsetX,
+    offsetY: offsetY,
+  );
+  final effectiveW = targetGridW > 0 ? targetGridW : gridWidth;
+  var changed = 0;
+
+  for (int row = 0; row < gridHeight; row++) {
+    for (int col = 0; col < gridWidth; col++) {
+      final gridIndex = (row + offsetY) * effectiveW + (col + offsetX);
+      if (boundaryGridIndices.contains(gridIndex)) continue;
+
+      final local = row * gridWidth + col;
+      final role = roles[local];
+      if (role == BeadCellRole.transition) continue;
+
+      final isBackground = role == BeadCellRole.background;
+      final minVotes = isBackground ? 3 : 4;
+      final threshold =
+          isBackground ? mergeThreshold + 2 : mergeThreshold - 1;
+
+      final current = gridCodes[gridIndex];
+      if (current.isEmpty) continue;
+
+      final neighborCounts = <String, int>{};
+      for (final dir in const [
+        [0, 1],
+        [0, -1],
+        [1, 0],
+        [-1, 0],
+      ]) {
+        final nr = row + dir[0];
+        final nc = col + dir[1];
+        if (nr < 0 || nr >= gridHeight || nc < 0 || nc >= gridWidth) continue;
+        final nIdx = (nr + offsetY) * effectiveW + (nc + offsetX);
+        if (boundaryGridIndices.contains(nIdx)) continue;
+        final nCode = gridCodes[nIdx];
+        if (nCode.isEmpty || nCode == current) continue;
+        neighborCounts[nCode] = (neighborCounts[nCode] ?? 0) + 1;
+      }
+
+      if (neighborCounts.isEmpty) continue;
+
+      final sorted = neighborCounts.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      final top = sorted.first;
+      if (top.value < minVotes) continue;
+
+      final de = ColorDelta.deltaE00BetweenCodes(current, top.key, labCache);
+      if (de > threshold) continue;
+
+      gridCodes[gridIndex] = top.key;
+      changed++;
+
+      final bead = beadColorMap[top.key];
+      if (bead == null) continue;
+      _fillGridBlock(
+        pixelizedImage,
+        xGridLines[col],
+        yGridLines[row],
+        xGridLines[col + 1],
+        yGridLines[row + 1],
+        bead,
+      );
+    }
+  }
+
+  if (changed > 0) {
+    debugPrint('[空间投票] 内部格统一: $changed 格');
+  }
+  return changed;
 }
 
 /// 小网格块颜色计算：加权平均，中心像素权重更高
@@ -796,24 +672,94 @@ _Color _calculateSmallBlockColor(
   );
 }
 
-/// 在珠子色库中查找 CIE Lab 感知距离最近的珠子色（全局搜索，保证最优映射）
+/// 四邻已映射格子的填充色 Lab（用于边界对比度映射）
+List<List<double>> _neighborFillLabs(
+  int row,
+  int col,
+  List<String> gridCodes, {
+  required int gridWidth,
+  required int gridHeight,
+  required Map<String, _BeadColor> beadColorMap,
+  int targetGridW = 0,
+  int offsetX = 0,
+  int offsetY = 0,
+}) {
+  final selfIndex = _gridCellIndex(
+    row,
+    col,
+    gridWidth: gridWidth,
+    targetGridW: targetGridW,
+    offsetX: offsetX,
+    offsetY: offsetY,
+  );
+  final selfCode = gridCodes[selfIndex];
+
+  final neighborCodes = <String>{};
+  for (final dir in const [
+    [0, 1],
+    [0, -1],
+    [1, 0],
+    [-1, 0],
+  ]) {
+    final nr = row + dir[0];
+    final nc = col + dir[1];
+    if (nr < 0 || nr >= gridHeight || nc < 0 || nc >= gridWidth) continue;
+
+    final code = gridCodes[_gridCellIndex(
+      nr,
+      nc,
+      gridWidth: gridWidth,
+      targetGridW: targetGridW,
+      offsetX: offsetX,
+      offsetY: offsetY,
+    )];
+    if (code.isEmpty || code == selfCode) continue;
+    neighborCodes.add(code);
+  }
+
+  final labs = <List<double>>[];
+  for (final code in neighborCodes) {
+    final bead = beadColorMap[code];
+    if (bead != null) labs.add(bead.lab);
+  }
+  return labs;
+}
+
+/// 在珠子色库中查找 CIE Lab 感知距离最近的珠子色（ΔE76 粗筛 + ΔE00 精算）
 _BeadColor _findClosestBeadColor(int r, int g, int b, List<_BeadColor> beadColors) {
   if (beadColors.isEmpty) {
     return _BeadColor(r: r, g: g, b: b, code: 'UNK');
   }
 
   final labInput = _rgbToLab(r, g, b);
-  _BeadColor closest = beadColors.first;
-  double minDist = _labDistFromValues(labInput, closest.lab);
+  final topK = math.min(5, beadColors.length);
+  final topIndices = List<int>.filled(topK, 0);
+  final topDistSq = List<double>.filled(topK, double.infinity);
 
-  for (final beadColor in beadColors) {
-    final dist = _labDistFromValues(labInput, beadColor.lab);
-    if (dist < minDist) {
-      minDist = dist;
-      closest = beadColor;
+  for (int i = 0; i < beadColors.length; i++) {
+    final d76 = ColorDelta.deltaE76SqFromLab(labInput, beadColors[i].lab);
+    for (int k = 0; k < topK; k++) {
+      if (d76 < topDistSq[k]) {
+        for (int j = topK - 1; j > k; j--) {
+          topIndices[j] = topIndices[j - 1];
+          topDistSq[j] = topDistSq[j - 1];
+        }
+        topIndices[k] = i;
+        topDistSq[k] = d76;
+        break;
+      }
     }
   }
 
+  var closest = beadColors[topIndices[0]];
+  var minDist = _labDistFromValues(labInput, closest.lab);
+  for (final idx in topIndices) {
+    final dist = _labDistFromValues(labInput, beadColors[idx].lab);
+    if (dist < minDist) {
+      minDist = dist;
+      closest = beadColors[idx];
+    }
+  }
   return closest;
 }
 
@@ -828,9 +774,10 @@ void _applyColorFilter(
   List<int> yGridLines,
   Map<String, _BeadColor> beadColorMap,
   List<String> gridCodes, {
-  int targetGridW = 0, // 完整目标网格宽（=0时等同gridWidth，用于居中适配场景）
+  int targetGridW = 0,
   int offsetX = 0,
   int offsetY = 0,
+  MergeIntensity mergeIntensity = MergeIntensity.medium,
 }) {
   debugPrint('[珠子颜色] ===== 开始应用颜色筛选 =====');
   debugPrint('[珠子颜色] 当前颜色数: ${colorFrequency.length}');
@@ -842,150 +789,60 @@ void _applyColorFilter(
     return;
   }
 
-  // 按使用频率排序
-  final sortedEntries = colorFrequency.entries.toList()
-    ..sort((a, b) => b.value.compareTo(a.value));
+  final labByCode = {
+    for (final entry in beadColorMap.entries) entry.key: entry.value.lab,
+  };
 
-  // 使用"频率+多样性"策略选择颜色
-  final selectedColors = _selectColorsWithDiversity(
-    sortedEntries,
-    beadColorMap,
-    maxColors,
+  final mergeMapping = ColorMergeUtil.buildMergeMapping(
+    colorCount: colorFrequency,
+    labByCode: labByCode,
+    maxColors: maxColors,
+    diversityThreshold: mergeIntensity.mergeThreshold,
   );
-  final topColors = selectedColors.map((e) => e.code).toSet();
-  debugPrint('[珠子颜色] 选中颜色代码 (${topColors.length}): ${topColors.toList().take(10)}${topColors.length > 10 ? '...' : ''}');
 
-  final topColorList = selectedColors.toList();
+  if (mergeMapping.isEmpty) {
+    debugPrint('[珠子颜色] 无需合并');
+    return;
+  }
 
-  // 将其他颜色映射到最接近的高频颜色（全局 Lab 搜索）
-  final colorRemapCache = <String, _BeadColor>{};
+  debugPrint('[珠子颜色] 合并映射 ${mergeMapping.length} 种色号');
 
   for (int row = 0; row < gridHeight; row++) {
     for (int col = 0; col < gridWidth; col++) {
-      // 居中适配时，映射到完整目标网格的索引
       final effectiveW = targetGridW > 0 ? targetGridW : gridWidth;
       final gridIndex = (row + offsetY) * effectiveW + (col + offsetX);
       final currentColorCode = gridCodes[gridIndex];
+      if (currentColorCode.isEmpty) continue;
 
-      // 如果当前颜色已经是高频颜色，跳过
-      if (topColors.contains(currentColorCode)) {
-        continue;
-      }
+      final remappedCode =
+          ColorMergeUtil.resolveCode(currentColorCode, mergeMapping);
+      if (remappedCode == currentColorCode) continue;
 
-      // 获取当前珠子颜色对象
-      final currentColor = beadColorMap[currentColorCode];
-      if (currentColor == null) continue;
+      gridCodes[gridIndex] = remappedCode;
 
-      // 查找缓存
-      if (!colorRemapCache.containsKey(currentColorCode)) {
-        final closestTopColor = _findClosestBeadColor(
-          currentColor.r,
-          currentColor.g,
-          currentColor.b,
-          topColorList,
-        );
-        colorRemapCache[currentColorCode] = closestTopColor;
-      }
+      final remappedColor = beadColorMap[remappedCode];
+      if (remappedColor == null) continue;
 
-      // 使用映射后的高频颜色
-      final remappedColor = colorRemapCache[currentColorCode]!;
-
-      // 更新 gridCodes
-      gridCodes[gridIndex] = remappedColor.code;
-
-      // 使用预计算的网格线位置
       final startX = xGridLines[col];
       final startY = yGridLines[row];
       final endX = xGridLines[col + 1];
       final endY = yGridLines[row + 1];
 
-      // 计算当前块的实际宽高
-      final actualWidth = endX - startX;
-      final actualHeight = endY - startY;
-
-      // 用映射后的高频颜色替换整个块
-      for (int y = startY; y < startY + actualHeight; y++) {
-        for (int x = startX; x < startX + actualWidth; x++) {
-          image.setPixelRgba(x, y, remappedColor.r, remappedColor.g, remappedColor.b, 255);
-        }
-      }
+      _fillGridBlock(
+        image,
+        startX,
+        startY,
+        endX,
+        endY,
+        remappedColor,
+      );
     }
   }
 
-  // 统计筛选后的颜色数
-  final finalColorCount = gridCodes.toSet().length;
+  final finalColorCount =
+      gridCodes.where((c) => c.isNotEmpty).toSet().length;
   debugPrint('[珠子颜色] ===== 颜色筛选完成 =====');
   debugPrint('[珠子颜色] 筛选后颜色数: $finalColorCount');
-}
-
-/// 使用"频率+多样性"策略选择颜色
-/// 确保选中的颜色在色彩空间中分布均匀，同时保留高频颜色
-List<_BeadColor> _selectColorsWithDiversity(
-  List<MapEntry<String, int>> sortedEntries,
-  Map<String, _BeadColor> beadColorMap,
-  int maxColors,
-) {
-  if (sortedEntries.length <= maxColors) {
-    return sortedEntries.map((e) => beadColorMap[e.key]!).toList();
-  }
-
-  final selected = <_BeadColor>[];
-  final remaining = <MapEntry<String, int>>[...sortedEntries];
-
-  // 动态计算最小颜色距离阈值：颜色限制越大，阈值越小
-  // 基准：8色时约8000，128色时约2000
-  final minDistanceThreshold = 8000.0 / (maxColors / 8).clamp(1, 16);
-  debugPrint('[颜色选择] 目标颜色数: $maxColors, 动态阈值: ${minDistanceThreshold.toStringAsFixed(0)}');
-
-  // 前 30% 的名额直接按频率选择，不受多样性限制（保护高频颜色）
-  final guaranteedCount = (maxColors * 0.3).ceil().clamp(1, maxColors ~/ 2);
-  int guaranteedSelected = 0;
-
-  // 第一轮：按频率选择，前 guaranteedCount 个不受多样性限制
-  for (final entry in remaining) {
-    if (selected.length >= maxColors) break;
-
-    final color = beadColorMap[entry.key];
-    if (color == null) continue;
-    if (selected.any((c) => c.code == color.code)) continue;
-
-    // 前 guaranteedCount 个颜色直接选中（保护高频颜色）
-    if (guaranteedSelected < guaranteedCount) {
-      selected.add(color);
-      guaranteedSelected++;
-      continue;
-    }
-
-    // 后续颜色需要通过多样性检查（使用 CIE Lab Delta E 感知距离）
-    bool isDiverse = true;
-    for (final selectedColor in selected) {
-      final dist = _labDistFromValues(color.lab, selectedColor.lab);
-      if (dist < minDistanceThreshold) {
-        isDiverse = false;
-        break;
-      }
-    }
-
-    if (isDiverse) {
-      selected.add(color);
-    }
-  }
-
-  // 第二轮：如果还没选够，放宽多样性要求，优先填充频率高的颜色
-  if (selected.length < maxColors) {
-    for (final entry in remaining) {
-      if (selected.length >= maxColors) break;
-
-      final color = beadColorMap[entry.key];
-      if (color == null) continue;
-      if (selected.any((c) => c.code == color.code)) continue;
-
-      selected.add(color);
-    }
-  }
-
-  debugPrint('[颜色选择] 选中颜色数: ${selected.length}');
-  return selected;
 }
 
 /// 在 Isolate 中执行的像素化函数
@@ -1004,7 +861,6 @@ Future<_PixelizeResult> _pixelizeInIsolate(_PixelizeParams params) async {
     // AI接口通常返回正方形图片，当用户选择非正方形网格时需要特殊处理
     int offsetX = 0;
     int offsetY = 0;
-    bool needsCentering = false;
 
     if (params.aiGridFitMode != AiGridFitMode.none && gridWidth != gridHeight) {
       final imgRatio = sourceImage.width / sourceImage.height;
@@ -1019,7 +875,6 @@ Future<_PixelizeResult> _pixelizeInIsolate(_PixelizeParams params) async {
             offsetY = ((gridHeight - size) / 2).floor();
             gridWidth = size;
             gridHeight = size;
-            needsCentering = true;
             debugPrint('[像素化] AI居中模式: 原始网格 ${params.gridWidth}x${params.gridHeight}'
                 ', 图片 ${sourceImage.width}x${sourceImage.height}(ratio=${imgRatio.toStringAsFixed(2)})'
                 ' → 实际处理 $gridWidth x $gridHeight, 偏移($offsetX,$offsetY)');
@@ -1056,6 +911,9 @@ Future<_PixelizeResult> _pixelizeInIsolate(_PixelizeParams params) async {
     } else {
       imageToProcess = sourceImage;
     }
+
+    // 内部区域采样用中值滤波图，边界格仍用原图（保留轮廓）
+    final smoothedImage = _medianFilter3x3(imageToProcess);
 
     final width = imageToProcess.width;
     final height = imageToProcess.height;
@@ -1102,23 +960,20 @@ Future<_PixelizeResult> _pixelizeInIsolate(_PixelizeParams params) async {
     // 确保最后一条线在边界
     yGridLines[gridHeight] = height;
 
-    // 遍历网格
+    // 阶段一：收集每格块均色样本
+    final blockSamples = <BlockColorSample>[];
+
     for (int row = 0; row < gridHeight; row++) {
       final startY = yGridLines[row];
       final endY = yGridLines[row + 1];
       final actualHeight = endY - startY;
 
       for (int col = 0; col < gridWidth; col++) {
-        // 计算网格索引（居中适配时映射到完整网格的目标位置）
         final gridIndex = (row + offsetY) * targetGridW + (col + offsetX);
-
-        // 使用预计算的网格线位置
         final startX = xGridLines[col];
         final endX = xGridLines[col + 1];
         final actualWidth = endX - startX;
-
-        // 计算该块的平均色（使用处理后的图片像素）
-        final avgColor = _calculateAverageColor(
+        final isBoundary = _isBoundaryBlock(
           imageToProcess,
           startX,
           startY,
@@ -1126,46 +981,253 @@ Future<_PixelizeResult> _pixelizeInIsolate(_PixelizeParams params) async {
           actualHeight,
         );
 
-        // 找到最接近的珠子颜色（全局 Lab 搜索）
-        final beadColor = _findClosestBeadColor(
-          avgColor.r.toInt(),
-          avgColor.g.toInt(),
-          avgColor.b.toInt(),
-          params.beadColors,
+        final avgColor = _calculateAverageColor(
+          isBoundary ? imageToProcess : smoothedImage,
+          startX,
+          startY,
+          actualWidth,
+          actualHeight,
+          isBoundary: isBoundary,
         );
 
-        // 统计使用频率
-        colorFrequency[beadColor.code] = (colorFrequency[beadColor.code] ?? 0) + 1;
-
-        // 记录网格块的颜色code
-        gridCodes[gridIndex] = beadColor.code;
-
-        // 用珠子颜色填充整个块
-        for (int y = startY; y < startY + actualHeight; y++) {
-          for (int x = startX; x < startX + actualWidth; x++) {
-            pixelizedImage.setPixelRgba(x, y, beadColor.r, beadColor.g, beadColor.b, 255);
-          }
-        }
+        blockSamples.add(BlockColorSample(
+          gridIndex: gridIndex,
+          row: row,
+          col: col,
+          r: avgColor.r,
+          g: avgColor.g,
+          b: avgColor.b,
+          weight: actualWidth * actualHeight,
+          isBoundary: isBoundary,
+        ));
       }
     }
 
-    debugPrint('[珠子颜色] 映射后实际使用的珠子颜色数: ${colorFrequency.length}');
+    // 阶段二：密度聚类 → 主色集合
+    final clusterK = ColorClusterUtil.resolveClusterCount(
+      colorLimit: params.colorLimit,
+      gridWidth: gridWidth,
+      gridHeight: gridHeight,
+      blockCount: blockSamples.length,
+    );
+    final kMeansResult = ColorClusterUtil.kMeansWeighted(blockSamples, clusterK);
+    final centroids = kMeansResult.centroids;
 
-    // 空间平滑：清除映射阶段产生的孤立杂色格（在减色之前，避免稀有色被错误合并）
-    _applySpatialSmoothing(
+    // 阶段三：聚类中心 → 珠色，合并映射到同一珠色的簇
+    final rawBeadCodes = <String>[];
+    for (final centroid in centroids) {
+      final bead = _findClosestBeadColor(
+        centroid.r.round(),
+        centroid.g.round(),
+        centroid.b.round(),
+        params.beadColors,
+      );
+      rawBeadCodes.add(bead.code);
+    }
+
+    final merged = ColorClusterUtil.mergeClustersByBeadCode(
+      centroids: centroids,
+      beadCodes: rawBeadCodes,
+      samples: blockSamples,
+      sampleAssignments: kMeansResult.assignments,
+    );
+    final masterBeadCodes = merged.beadCodes;
+
+    final masterBeadCodesResolved = <String>[];
+    final masterBeadLabs = <List<double>>[];
+    for (final code in masterBeadCodes) {
+      final bead = params.beadColorMap[code];
+      if (bead != null) {
+        masterBeadCodesResolved.add(code);
+        masterBeadLabs.add(bead.lab);
+      }
+    }
+
+    debugPrint(
+      '[聚类映射] K=$clusterK → ${merged.centroids.length}簇 / '
+      '${masterBeadCodes.length}种主色珠色: '
+      '${masterBeadCodes.take(8)}${masterBeadCodes.length > 8 ? '...' : ''}',
+    );
+
+    // 阶段四：每格在已定主色号集合内做 ΔE00 最近映射（不经过簇中心中转）
+    for (final sample in blockSamples) {
+      final beadCode = ColorClusterUtil.nearestMasterBeadCode(
+        sample,
+        masterBeadCodesResolved,
+        masterBeadLabs,
+      );
+      if (beadCode.isEmpty) continue;
+
+      final beadColor = params.beadColorMap[beadCode];
+      if (beadColor == null) continue;
+
+      gridCodes[sample.gridIndex] = beadCode;
+      colorFrequency[beadCode] = (colorFrequency[beadCode] ?? 0) + 1;
+
+      final startX = xGridLines[sample.col];
+      final startY = yGridLines[sample.row];
+      final endX = xGridLines[sample.col + 1];
+      final endY = yGridLines[sample.row + 1];
+
+      _fillGridBlock(
+        pixelizedImage,
+        startX,
+        startY,
+        endX,
+        endY,
+        beadColor,
+      );
+    }
+
+    final boundaryGridIndices = {
+      for (final s in blockSamples)
+        if (s.isBoundary) s.gridIndex,
+    };
+    _applyInteriorSpatialVote(
+      gridCodes: gridCodes,
+      gridWidth: gridWidth,
+      gridHeight: gridHeight,
+      beadColorMap: params.beadColorMap,
+      boundaryGridIndices: boundaryGridIndices,
+      pixelizedImage: pixelizedImage,
+      xGridLines: xGridLines,
+      yGridLines: yGridLines,
+      targetGridW: targetGridW,
+      offsetX: offsetX,
+      offsetY: offsetY,
+      mergeThreshold: params.mergeIntensity.mergeThreshold,
+    );
+
+    // 阶段四 B：边界格精修（深色描边统一 + 对比度优化）
+    var boundaryRefined = 0;
+    for (final sample in blockSamples) {
+      if (!sample.isBoundary) continue;
+
+      final neighborLabs = _neighborFillLabs(
+        sample.row,
+        sample.col,
+        gridCodes,
+        gridWidth: gridWidth,
+        gridHeight: gridHeight,
+        beadColorMap: params.beadColorMap,
+        targetGridW: targetGridW,
+        offsetX: offsetX,
+        offsetY: offsetY,
+      );
+      if (neighborLabs.length < 2) continue;
+
+      final refinedCode = ColorClusterUtil.nearestMasterBeadCodeWithContrast(
+        sample,
+        masterBeadCodesResolved,
+        masterBeadLabs,
+        neighborLabs,
+      );
+      if (refinedCode.isEmpty) continue;
+
+      final currentCode = gridCodes[sample.gridIndex];
+      if (refinedCode == currentCode) continue;
+
+      gridCodes[sample.gridIndex] = refinedCode;
+      colorFrequency[currentCode] = (colorFrequency[currentCode] ?? 1) - 1;
+      if (colorFrequency[currentCode]! <= 0) colorFrequency.remove(currentCode);
+      colorFrequency[refinedCode] = (colorFrequency[refinedCode] ?? 0) + 1;
+      boundaryRefined++;
+
+      final beadColor = params.beadColorMap[refinedCode];
+      if (beadColor == null) continue;
+
+      _fillGridBlock(
+        pixelizedImage,
+        xGridLines[sample.col],
+        yGridLines[sample.row],
+        xGridLines[sample.col + 1],
+        yGridLines[sample.row + 1],
+        beadColor,
+      );
+    }
+    if (boundaryRefined > 0) {
+      debugPrint('[轮廓映射] 边界格精修: $boundaryRefined 格');
+    }
+
+    // 阶段四 C：深色描边统一（消除黑/深灰珠色交织）
+    var outlineUnified = 0;
+    for (final sample in blockSamples) {
+      final currentCode = gridCodes[sample.gridIndex];
+      if (currentCode.isEmpty) continue;
+
+      final currentBead = params.beadColorMap[currentCode];
+      if (currentBead == null) continue;
+
+      final neighborLabs = _neighborFillLabs(
+        sample.row,
+        sample.col,
+        gridCodes,
+        gridWidth: gridWidth,
+        gridHeight: gridHeight,
+        beadColorMap: params.beadColorMap,
+        targetGridW: targetGridW,
+        offsetX: offsetX,
+        offsetY: offsetY,
+      );
+      if (neighborLabs.isEmpty) continue;
+
+      final avgNeighborL =
+          neighborLabs.map((l) => l[0]).reduce((a, b) => a + b) /
+              neighborLabs.length;
+      if (avgNeighborL < 50) continue;
+
+      final isDarkContext =
+          sample.lab[0] < 48 || currentBead.lab[0] < 52;
+      if (!isDarkContext) continue;
+
+      final unifiedCode = ColorClusterUtil.nearestDarkestOutlineBead(
+        sample.lab,
+        masterBeadCodesResolved,
+        masterBeadLabs,
+        neighborLabs,
+      );
+      if (unifiedCode == null || unifiedCode == currentCode) continue;
+
+      gridCodes[sample.gridIndex] = unifiedCode;
+      colorFrequency[currentCode] = (colorFrequency[currentCode] ?? 1) - 1;
+      if (colorFrequency[currentCode]! <= 0) colorFrequency.remove(currentCode);
+      colorFrequency[unifiedCode] = (colorFrequency[unifiedCode] ?? 0) + 1;
+      outlineUnified++;
+
+      final beadColor = params.beadColorMap[unifiedCode];
+      if (beadColor == null) continue;
+
+      _fillGridBlock(
+        pixelizedImage,
+        xGridLines[sample.col],
+        yGridLines[sample.row],
+        xGridLines[sample.col + 1],
+        yGridLines[sample.row + 1],
+        beadColor,
+      );
+    }
+    if (outlineUnified > 0) {
+      debugPrint('[轮廓映射] 深色描边统一: $outlineUnified 格');
+    }
+
+    debugPrint('[珠子颜色] 聚类映射后珠子颜色数: ${colorFrequency.length}');
+
+    // 连通块后处理：孤立杂色 + 微小色块（减色之前，避免稀有色被错误合并）
+    _runPostProcess(
       gridCodes,
       gridWidth,
       gridHeight,
+      params.beadColorMap,
+      params.mergeIntensity,
       pixelizedImage,
       xGridLines,
       yGridLines,
-      params.beadColorMap,
       targetGridW: targetGridW,
       offsetX: offsetX,
       offsetY: offsetY,
     );
 
-    // 平滑后重新统计颜色频率
+    // 后处理后重新统计颜色频率
     colorFrequency.clear();
     for (int row = 0; row < gridHeight; row++) {
       for (int col = 0; col < gridWidth; col++) {
@@ -1182,12 +1244,14 @@ Future<_PixelizeResult> _pixelizeInIsolate(_PixelizeParams params) async {
         }
       }
     }
-    debugPrint('[珠子颜色] 空间平滑后颜色数: ${colorFrequency.length}');
+    debugPrint('[珠子颜色] 后处理后颜色数: ${colorFrequency.length}');
     debugPrint('[珠子颜色] params.colorLimit: ${params.colorLimit}');
 
-    // 应用颜色筛选（只要设置了颜色限制，总是执行筛选逻辑）
-    if (params.colorLimit > 0) {
-      // 调用筛选函数，内部会根据实际情况决定是否需要映射
+    // 聚类阶段已按 colorLimit 控色时，跳过二次减色，避免过度合并
+    final skipSecondaryColorMerge = params.colorLimit > 0 &&
+        colorFrequency.length <= params.colorLimit;
+
+    if (params.colorLimit > 0 && !skipSecondaryColorMerge) {
       debugPrint('[珠子颜色] ✅ 执行颜色筛选逻辑，限制: ${params.colorLimit}');
       _applyColorFilter(
         pixelizedImage,
@@ -1202,49 +1266,49 @@ Future<_PixelizeResult> _pixelizeInIsolate(_PixelizeParams params) async {
         targetGridW: targetGridW,
         offsetX: offsetX,
         offsetY: offsetY,
+        mergeIntensity: params.mergeIntensity,
       );
+    } else if (params.colorLimit > 0) {
+      debugPrint('[珠子颜色] 聚类已满足色号上限(${colorFrequency.length}/${params.colorLimit})，跳过二次减色');
     } else {
       debugPrint('[珠子颜色] ℹ️ 无颜色限制，不进行筛选');
     }
 
-    // 噪点过滤（移到颜色筛选之后，避免误删重要颜色）
-    // 使用平均像素数判断：每个网格块的平均像素数 < 100 时启用更严格的过滤
-    final avgPixelsPerBlock = (width * height) / (gridWidth * gridHeight);
-    final isSmallGrid = avgPixelsPerBlock < 100;
-
-    if (isSmallGrid || gridWidth > 40 || gridHeight > 40) {
-      _removeNoiseColors(
+    // 减色后再次后处理（中/高档合并强度）
+    if (params.mergeIntensity != MergeIntensity.low) {
+      _runPostProcess(
         gridCodes,
         gridWidth,
         gridHeight,
-        colorFrequency,
+        params.beadColorMap,
+        params.mergeIntensity,
         pixelizedImage,
         xGridLines,
         yGridLines,
-        params.beadColorMap,
-        isSmallGrid: isSmallGrid,
         targetGridW: targetGridW,
         offsetX: offsetX,
         offsetY: offsetY,
       );
-      debugPrint('[珠子颜色] 噪点过滤后颜色数: ${gridCodes.toSet().length}');
+      debugPrint('[珠子颜色] 二次后处理完成，颜色数: ${gridCodes.where((c) => c.isNotEmpty).toSet().length}');
     }
 
     debugPrint('[珠子颜色] 最终显示的颜色数: ${gridCodes.toSet().length}');
     debugPrint('[珠子颜色] 使用的珠子颜色代码: ${gridCodes.toSet().toList().take(10)}${gridCodes.toSet().length > 10 ? '...' : ''}');
 
-    // 验证所有像素都被填充
-    int unfilledPixels = 0;
-    for (int y = 0; y < pixelizedImage.height; y++) {
-      for (int x = 0; x < pixelizedImage.width; x++) {
-        final pixel = pixelizedImage.getPixel(x, y);
-        if (pixel.a == 0) {
-          unfilledPixels++;
+    // 验证所有像素都被填充（仅 debug）
+    if (kDebugMode) {
+      int unfilledPixels = 0;
+      for (int y = 0; y < pixelizedImage.height; y++) {
+        for (int x = 0; x < pixelizedImage.width; x++) {
+          final pixel = pixelizedImage.getPixel(x, y);
+          if (pixel.a == 0) {
+            unfilledPixels++;
+          }
         }
       }
-    }
-    if (unfilledPixels > 0) {
-      debugPrint('[像素化] 警告：有$unfilledPixels个像素未被填充！');
+      if (unfilledPixels > 0) {
+        debugPrint('[像素化] 警告：有$unfilledPixels个像素未被填充！');
+      }
     }
 
     // 编码为 PNG
@@ -1430,6 +1494,7 @@ class PixelizeUtil {
     ColorLimit? colorLimit,
     BeadBrand brand, {
     AiGridFitMode aiGridFitMode = AiGridFitMode.none,
+    MergeIntensity mergeIntensity = MergeIntensity.medium,
   }) async {
     try {
       debugPrint('[像素化] ===== 开始处理 (bytes模式) =====');
@@ -1438,6 +1503,7 @@ class PixelizeUtil {
       debugPrint('[像素化] 颜色库: ${brand.displayName}');
       debugPrint('[像素化] 颜色库路径: ${brand.jsonPath}');
       debugPrint('[像素化] 颜色限制: ${colorLimit?.label ?? '无限制'}');
+      debugPrint('[像素化] 合并强度: ${mergeIntensity.label} (ΔE00≤${mergeIntensity.mergeThreshold})');
 
       // 设置颜色库
       setBeadBrand(brand);
@@ -1462,6 +1528,7 @@ class PixelizeUtil {
         colorLimit: colorLimit?.limit ?? -1,
         brandSuffix: '_${_currentBrand.displayName.toLowerCase()}',
         aiGridFitMode: aiGridFitMode,
+        mergeIntensity: mergeIntensity,
       );
 
       debugPrint('[像素化] 在后台线程中处理...');
@@ -1507,12 +1574,17 @@ class PixelizeUtil {
     int gridWidth,
     int gridHeight,
     ColorLimit? colorLimit,
-    BeadBrand brand,
-  ) async {
-    // 读取文件字节后委托给 bytes 版本
+    BeadBrand brand, {
+    MergeIntensity mergeIntensity = MergeIntensity.medium,
+  }) async {
     final imageBytes = await imageFile.readAsBytes();
     return pixelizeImageFromBytes(
-      imageBytes, gridWidth, gridHeight, colorLimit, brand,
+      imageBytes,
+      gridWidth,
+      gridHeight,
+      colorLimit,
+      brand,
+      mergeIntensity: mergeIntensity,
     );
   }
 

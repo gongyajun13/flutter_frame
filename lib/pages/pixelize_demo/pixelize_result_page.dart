@@ -142,25 +142,90 @@ class PixelizeResultPage extends BaseView<PixelizeResultController> {
     );
   }
 
-  /// 标题栏：导出
+  /// 标题栏：保存 + 更多（导出）
   Widget _buildTitleSaveAction() {
-    return InkWell(
-      onTap: controller.exportImage,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20.r),
-        ),
-        child: Text(
-          '导出',
-          style: TextStyle(
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w500,
-            color: Colors.black,
-          ),
-        ),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
       ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          InkWell(
+            onTap: () => controller.titleOption(0),
+            borderRadius: BorderRadius.horizontal(left: Radius.circular(20.r)),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+              child: Text(
+                '保存',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ),
+          Container(
+            width: 1.w,
+            height: 14.h,
+            color: const Color(0xFFE8E8E8),
+          ),
+          CustomPopup(
+            showArrow: false,
+            barrierColor: Colors.black.withValues(alpha: 0.1),
+            position: PopupPosition.bottom,
+            content: _buildTitleMorePopupContent(),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+              child: Icon(
+                Icons.more_vert,
+                size: 18.w,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTitleMorePopupContent() {
+    return Builder(
+      builder: (popupContext) {
+        return IntrinsicWidth(
+          child: Container(
+            padding: EdgeInsets.all(5.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: AppColors.cFAC331, width: 1.w),
+              borderRadius: BorderRadius.circular(12.w),
+            ),
+            child: InkWell(
+              onTap: () {
+                Navigator.of(popupContext).pop();
+                controller.titleOption(1);
+              },
+              borderRadius: BorderRadius.circular(8.w),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.w),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.ios_share_outlined, size: 16.w),
+                    SizedBox(width: 8.w),
+                    Text(
+                      '导出',
+                      style: TextStyle(fontSize: 14.sp, color: Colors.black),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

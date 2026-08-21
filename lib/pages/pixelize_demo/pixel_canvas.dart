@@ -796,14 +796,18 @@ class _PixelCanvasState extends State<PixelCanvas> {
     final cpBox = cpContext.findRenderObject() as RenderBox?;
     if (cpBox == null) return null;
     try {
-      final localPos = cpBox.globalToLocal(globalPosition);
-
-      final imgDisplayW = blockWidth * gridWidth;
-      final imgDisplayH = blockHeight * gridHeight;
-      final dynOffX = (cpBox.size.width - imgDisplayW) / 2;
-      final dynOffY = (cpBox.size.height - imgDisplayH) / 2;
-      final contentX = localPos.dx - dynOffX;
-      final contentY = localPos.dy - dynOffY;
+      // 手动坐标转换（与 _globalToGridPosition 保持一致）
+      final screenOrigin = cpBox.localToGlobal(Offset.zero);
+      final relX = globalPosition.dx - screenOrigin.dx;
+      final relY = globalPosition.dy - screenOrigin.dy;
+      final matrix = _transformationController.value;
+      final scale = matrix.getMaxScaleOnAxis();
+      final localX = relX / scale;
+      final localY = relY / scale;
+      final dynOffX = (cpBox.size.width - blockWidth * gridWidth) / 2;
+      final dynOffY = (cpBox.size.height - blockHeight * gridHeight) / 2;
+      final contentX = localX - dynOffX;
+      final contentY = localY - dynOffY;
       final gx = (contentX / blockWidth).floor();
       final gy = (contentY / blockHeight).floor();
       if (gx < 0 || gx >= gridWidth || gy < 0 || gy >= gridHeight) return null;
@@ -872,6 +876,8 @@ class _PixelCanvasState extends State<PixelCanvas> {
 
   @override
   Widget build(BuildContext context) {
+    final gridWidth = _controller.gridWidth.value;
+    final gridHeight = _controller.gridHeight.value;
     final maxHeight = 375.h;
 
     if (_image == null) {

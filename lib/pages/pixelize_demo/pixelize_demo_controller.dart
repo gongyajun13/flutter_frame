@@ -27,7 +27,7 @@ class PixelizeDemoController extends BaseController {
   /// 当前选中的网格大小
   final Rx<GridSize> selectedGridSize = GridSize.size52x52.obs;
 
-  /// 默认色号品牌 / 颜色数量（画板内可再调整）
+  /// 默认色号品牌（颜色数量不限，画板内可再减色）
   static const BeadBrand _defaultBeadBrand = BeadBrand.mard;
   static const ColorLimit _defaultColorLimit = ColorLimit.unlimited;
 

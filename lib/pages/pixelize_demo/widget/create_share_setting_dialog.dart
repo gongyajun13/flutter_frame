@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:flutter_frame/widgets/pixelize/bc_gradient_container.dart';
 import 'package:flutter_frame/widgets/pixelize/bc_gradient_text_button.dart';
 import 'package:flutter_frame/constants/app_colors.dart';
+import '../data/export_setting_storage.dart';
 
 class SwitchItemData {
   final String title;
@@ -22,6 +23,33 @@ class CreateShareSettingDialog extends StatefulWidget {
     required this.items,
   });
 
+  static const List<String> _optionTitles = [
+    '显示颜色代码',
+    '显示网格线',
+    '显示网格编号',
+    '显示网格覆盖',
+    '显示使用的颜色',
+  ];
+
+  /// 读取本地缓存后弹出导出选项
+  static Future<List<bool>?> show() async {
+    final cached = await ExportSettingStorage.load();
+    final items = List.generate(
+      _optionTitles.length,
+      (i) => SwitchItemData(
+        title: _optionTitles[i],
+        value: cached[i],
+      ),
+    );
+    final result = await Get.dialog<List<bool>>(
+      CreateShareSettingDialog(items: items),
+    );
+    if (result == null || result.length != ExportSettingStorage.optionCount) {
+      return null;
+    }
+    return result;
+  }
+
   @override
   State<StatefulWidget> createState() => _CreateShareSettingDialogState();
 }
@@ -33,6 +61,10 @@ class _CreateShareSettingDialogState extends State<CreateShareSettingDialog> {
   void initState() {
     super.initState();
     _items = widget.items;
+  }
+
+  void _persistSettings() {
+    ExportSettingStorage.save(_items.map((e) => e.value).toList());
   }
 
   @override
@@ -140,6 +172,7 @@ class _CreateShareSettingDialogState extends State<CreateShareSettingDialog> {
                 setState(() {
                   item.value = val;
                 });
+                _persistSettings();
               },
               activeTrackColor: const Color(0xFFFFD756),
               inactiveThumbColor: Colors.white,
